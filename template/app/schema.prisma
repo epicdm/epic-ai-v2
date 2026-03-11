@@ -12,9 +12,13 @@ model User {
   id                String    @id @default(cuid())
   clerkId           String    @unique
   email             String    @unique
-  username          String?   // Open SaaS compat — not used with Clerk
-  subscriptionStatus String?  // Open SaaS compat — mapped to plan field
-  subscriptionPlan  String?   // Open SaaS compat — not used
+  // Open SaaS compat fields — required by Wasp SDK generated code, not used by BFF logic
+  username                String?
+  subscriptionStatus      String?
+  subscriptionPlan        String?
+  paymentProcessorUserId  String?   @unique
+  datePaid                DateTime?
+  credits                 Int       @default(0)
   plan              String    @default("free")   // "free" | "pro" | "business"
   notificationPrefs Json      @default("{\"summaryInterval\":\"2hr\",\"quietStart\":\"22:00\",\"quietEnd\":\"08:00\",\"instantAlerts\":[\"hot_lead\",\"negative_sentiment\",\"payment_moment\",\"call_request\"]}")
   lastSummaryAt     DateTime?
