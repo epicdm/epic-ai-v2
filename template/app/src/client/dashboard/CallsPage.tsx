@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "wasp/client/auth";
+import { useAuth } from "../../lib/useClerkAuth";
 import { useQuery } from "wasp/client/operations";
 import { getAgents } from "wasp/client/operations";
 import { Phone, Bot } from "lucide-react";

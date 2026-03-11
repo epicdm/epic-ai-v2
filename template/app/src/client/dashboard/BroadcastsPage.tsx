@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useAction } from "wasp/client/operations";
-import { useAuth } from "wasp/client/auth";
+import { useAuth } from "../../lib/useClerkAuth";
 import { getBroadcasts, createBroadcast, sendBroadcast, deleteBroadcast, getAgents } from "wasp/client/operations";
 import { Radio, Plus, Send, Trash2, RefreshCw, Users, Clock, Megaphone } from "lucide-react";
 

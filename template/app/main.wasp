@@ -17,32 +17,8 @@ app EpicAI {
     "<meta property='og:description' content='Your AI receptionist, on WhatsApp. Handles calls, messages, reminders and more — 24/7.' />",
   ],
 
-  auth: {
-    userEntity: User,
-    methods: {
-      email: {
-        fromField: {
-          name: "EPIC AI",
-          email: "noreply@epic.dm"
-        },
-        emailVerification: {
-          clientRoute: EmailVerificationRoute,
-          getEmailContentFn: import { getVerificationEmailContent } from "@src/auth/email-and-pass/emails",
-        },
-        passwordReset: {
-          clientRoute: PasswordResetRoute,
-          getEmailContentFn: import { getPasswordResetEmailContent } from "@src/auth/email-and-pass/emails",
-        },
-        userSignupFields: import { getEmailUserFields } from "@src/auth/userSignupFields",
-      },
-      google: {
-        userSignupFields: import { getGoogleUserFields } from "@src/auth/userSignupFields",
-        configFn: import { getGoogleAuthConfig } from "@src/auth/userSignupFields",
-      },
-    },
-    onAuthFailedRedirectTo: "/login",
-    onAuthSucceededRedirectTo: "/dashboard",
-  },
+  // Auth handled by Clerk — NOT Wasp built-in auth
+  // ClerkProvider injected in virtual index.tsx
 
   db: {
     seeds: [
@@ -50,13 +26,8 @@ app EpicAI {
     ]
   },
 
-  emailSender: {
-    provider: SMTP,
-    defaultFrom: {
-      name: "EPIC AI",
-      email: "noreply@epic.dm"
-    },
-  },
+  // Email sending via SMTP (for future use)
+
 }
 
 // ─── Landing & Auth ──────────────────────────────────────────
@@ -76,92 +47,68 @@ page SignupPage {
   component: import { SignupPage } from "@src/auth/SignupPage"
 }
 
-route RequestPasswordResetRoute { path: "/request-password-reset", to: RequestPasswordResetPage }
-page RequestPasswordResetPage {
-  component: import { RequestPasswordResetPage } from "@src/auth/email-and-pass/RequestPasswordResetPage"
-}
+// Clerk handles password reset and email verification — no Wasp pages needed
 
-route PasswordResetRoute { path: "/password-reset", to: PasswordResetPage }
-page PasswordResetPage {
-  component: import { PasswordResetPage } from "@src/auth/email-and-pass/PasswordResetPage"
-}
-
-route EmailVerificationRoute { path: "/email-verification", to: EmailVerificationPage }
-page EmailVerificationPage {
-  component: import { EmailVerificationPage } from "@src/auth/email-and-pass/EmailVerificationPage"
-}
 
 // ─── Dashboard ───────────────────────────────────────────────
 
 route DashboardRoute { path: "/dashboard", to: DashboardPage }
 page DashboardPage {
-  authRequired: true,
   component: import DashboardPage from "@src/client/dashboard/DashboardPage"
 }
 
 route AgentsRoute { path: "/dashboard/agents", to: AgentsPage }
 page AgentsPage {
-  authRequired: true,
   component: import AgentsPage from "@src/client/dashboard/AgentsPage"
 }
 
 route AgentDetailRoute { path: "/dashboard/agents/:agentId", to: AgentDetailPage }
 page AgentDetailPage {
-  authRequired: true,
   component: import AgentDetailPage from "@src/client/dashboard/AgentDetailPage"
 }
 
 route ConversationsRoute { path: "/dashboard/conversations", to: ConversationsPage }
 page ConversationsPage {
-  authRequired: true,
   component: import ConversationsPage from "@src/client/dashboard/ConversationsPage"
 }
 
 route CallsRoute { path: "/dashboard/calls", to: CallsPage }
 page CallsPage {
-  authRequired: true,
   component: import CallsPage from "@src/client/dashboard/CallsPage"
 }
 
 route BroadcastsRoute { path: "/dashboard/broadcasts", to: BroadcastsPage }
 page BroadcastsPage {
-  authRequired: true,
   component: import BroadcastsPage from "@src/client/dashboard/BroadcastsPage"
 }
 
 route ContactsRoute { path: "/dashboard/contacts", to: ContactsPage }
 page ContactsPage {
-  authRequired: true,
   component: import ContactsPage from "@src/client/dashboard/ContactsPage"
 }
 
 route BillingRoute { path: "/dashboard/billing", to: BillingPage }
 page BillingPage {
-  authRequired: true,
   component: import BillingPage from "@src/client/dashboard/BillingPage"
 }
 
 route SettingsRoute { path: "/dashboard/settings", to: SettingsPage }
 page SettingsPage {
-  authRequired: true,
   component: import SettingsPage from "@src/client/dashboard/SettingsPage"
 }
 
 route CreateAgentRoute { path: "/create", to: CreateAgentPage }
 page CreateAgentPage {
-  authRequired: true,
   component: import CreateAgentPage from "@src/client/onboarding/CreateAgentPage"
 }
 
 route OnboardingRoute { path: "/onboarding", to: OnboardingPage }
 page OnboardingPage {
-  authRequired: true,
   component: import { OnboardingPage } from "@src/client/OnboardingPage"
 }
 
 route UpgradeRoute { path: "/upgrade", to: UpgradePage }
 page UpgradePage {
-  authRequired: true,
   component: import { UpgradePage } from "@src/client/UpgradePage"
 }
 
@@ -174,19 +121,16 @@ page PricingPage {
 
 route AdminRoute { path: "/admin", to: AdminDashboardPage }
 page AdminDashboardPage {
-  authRequired: true,
   component: import { AnalyticsDashboardPage } from "@src/admin/dashboards/AnalyticsDashboardPage"
 }
 
 route AdminUsersRoute { path: "/admin/users", to: AdminUsersPage }
 page AdminUsersPage {
-  authRequired: true,
   component: import { AdminUsersPage } from "@src/admin/dashboards/AdminUsersPage"
 }
 
 route AdminSettingsRoute { path: "/admin/settings", to: AdminSettingsPage }
 page AdminSettingsPage {
-  authRequired: true,
   component: import { AdminSettingsPage } from "@src/admin/elements/AdminSettingsPage"
 }
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "wasp/client/auth";
+import { useAuth } from "../../lib/useClerkAuth";
 import { Check, Zap, Crown, Sparkles, ExternalLink } from "lucide-react";
 
 const PLANS = [

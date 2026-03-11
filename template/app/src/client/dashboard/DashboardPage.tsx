@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { useQuery } from "wasp/client/operations";
-import { useAuth } from "wasp/client/auth";
+import { useAuth } from "../../lib/useClerkAuth";
 import { getAgents, getConversations } from "wasp/client/operations";
 import { Bot, MessageCircle, Zap, Crown, Plus, ChevronRight, Clock } from "lucide-react";
 

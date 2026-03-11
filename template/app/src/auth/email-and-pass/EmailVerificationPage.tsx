@@ -1,4 +1,4 @@
-import { VerifyEmailForm } from "wasp/client/auth";
+import { VerifyEmailForm } from "../../lib/useClerkAuth";
 import { Link as WaspRouterLink, routes } from "wasp/client/router";
 import { AuthPageLayout } from "../AuthPageLayout";
 

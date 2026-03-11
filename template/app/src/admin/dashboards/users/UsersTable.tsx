@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuth } from "wasp/client/auth";
+import { useAuth } from "../../../lib/useClerkAuth";
 import {
   getPaginatedUsers,
   updateIsUserAdminById,
