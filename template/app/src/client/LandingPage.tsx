@@ -10,32 +10,29 @@ const JENNY_MESSAGES = [
   { delay: 5000, text: "What kind of business do you run?" },
 ];
 
-const RESPONSES: Record<string, string[]> = {
-  default: [
-    "Perfect! I can handle that. 💪",
-    "Your customers message you on WhatsApp, I respond instantly — in your voice, with your info.",
-    "Want to see how it works for your business?",
-  ],
-};
+const JENNY_REPLIES = [
+  "Perfect! I can handle that. 💪",
+  "Your customers message you on WhatsApp, I respond instantly — in your voice, with your info.",
+  "Want me to do this for YOUR customers? Setup takes 5 minutes. 👇",
+];
 
 type Bubble = { from: "jenny" | "user"; text: string };
 
 export default function LandingPage() {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [userInput, setUserInput] = useState("");
-  const [phase, setPhase] = useState<"intro" | "waiting" | "responded" | "done">("intro");
+  const [phase, setPhase] = useState<"intro" | "waiting" | "replied" | "done">("intro");
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Play intro messages
   useEffect(() => {
-    JENNY_MESSAGES.forEach(({ delay, text }) => {
+    JENNY_MESSAGES.forEach(({ delay, text }, idx) => {
       setTimeout(() => {
         setTyping(true);
         setTimeout(() => {
           setTyping(false);
           setBubbles(b => [...b, { from: "jenny", text }]);
-          if (text === JENNY_MESSAGES[JENNY_MESSAGES.length - 1].text) setPhase("waiting");
+          if (idx === JENNY_MESSAGES.length - 1) setPhase("waiting");
         }, 900);
       }, delay);
     });
@@ -45,85 +42,77 @@ export default function LandingPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [bubbles, typing]);
 
-  const handleSend = () => {
+  const send = () => {
     if (!userInput.trim() || phase !== "waiting") return;
-    const msg = userInput.trim();
+    setBubbles(b => [...b, { from: "user", text: userInput.trim() }]);
     setUserInput("");
-    setPhase("responded");
-    setBubbles(b => [...b, { from: "user", text: msg }]);
-
-    // Jenny responds
-    RESPONSES.default.forEach((text, i) => {
+    setPhase("replied");
+    JENNY_REPLIES.forEach((text, i) => {
       setTimeout(() => {
         setTyping(true);
         setTimeout(() => {
           setTyping(false);
           setBubbles(b => [...b, { from: "jenny", text }]);
-          if (i === RESPONSES.default.length - 1) setPhase("done");
+          if (i === JENNY_REPLIES.length - 1) setPhase("done");
         }, 900);
       }, 1200 + i * 2200);
     });
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif" }}>
 
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold">AI</div>
-          <span className="font-semibold text-white">EPIC AI</span>
+      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #6366f1, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>AI</div>
+          <span style={{ fontWeight: 600, fontSize: 15 }}>EPIC AI</span>
         </div>
-        <div className="flex items-center gap-4">
-          <Link to={routes.PricingRoute.build()} className="text-sm text-zinc-400 hover:text-white transition-colors">Pricing</Link>
-          <Link to={routes.LoginRoute.build()} className="text-sm text-zinc-400 hover:text-white transition-colors">Sign in</Link>
-          <Link to={routes.SignupRoute.build()} className="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors font-medium">Get Started Free</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <Link to={routes.PricingRoute.build()} style={{ color: "#71717a", textDecoration: "none", fontSize: 14 }}>Pricing</Link>
+          <Link to={routes.LoginRoute.build()} style={{ color: "#71717a", textDecoration: "none", fontSize: 14 }}>Sign in</Link>
+          <Link to={routes.SignupRoute.build()} style={{ background: "#4f46e5", color: "#fff", textDecoration: "none", padding: "7px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600 }}>Get Started Free</Link>
         </div>
       </nav>
 
-      {/* Hero — chat interface */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <div className="w-full max-w-lg">
+      {/* Hero */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 16px 40px" }}>
+        <div style={{ width: "100%", maxWidth: 460 }}>
 
-          {/* Phone mockup wrapper */}
-          <div className="relative">
-            {/* Glow */}
-            <div className="absolute inset-0 bg-indigo-600/20 blur-3xl rounded-3xl" />
+          {/* Chat window */}
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", inset: -1, background: "rgba(99,102,241,0.15)", filter: "blur(40px)", borderRadius: 24, zIndex: 0 }} />
+            <div style={{ position: "relative", background: "#111118", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, overflow: "hidden", boxShadow: "0 25px 60px rgba(0,0,0,0.6)", zIndex: 1 }}>
 
-            {/* Chat window */}
-            <div className="relative bg-[#111118] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-
-              {/* WhatsApp-style header */}
-              <div className="flex items-center gap-3 px-4 py-3 bg-[#1a1a24] border-b border-white/5">
-                <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-sm font-bold">J</div>
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-[#1a1a24]" />
+              {/* Chat header */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "#16161f", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ position: "relative" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #818cf8, #7c3aed)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14, color: "#fff" }}>J</div>
+                  <div style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, background: "#22c55e", borderRadius: "50%", border: "2px solid #16161f" }} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Jenny · EPIC AI</p>
-                  <p className="text-[11px] text-green-400">online</p>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>Jenny · EPIC AI</div>
+                  <div style={{ fontSize: 11, color: "#22c55e" }}>online</div>
                 </div>
               </div>
 
               {/* Messages */}
-              <div className="h-72 overflow-y-auto p-4 space-y-2 flex flex-col">
+              <div style={{ height: 280, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                 {bubbles.map((b, i) => (
-                  <div key={i} className={`flex ${b.from === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
-                      b.from === "jenny"
-                        ? "bg-[#1e1e2e] text-zinc-100 rounded-tl-sm"
-                        : "bg-indigo-600 text-white rounded-tr-sm"
-                    }`}>
-                      {b.text}
-                    </div>
+                  <div key={i} style={{ display: "flex", justifyContent: b.from === "user" ? "flex-end" : "flex-start" }}>
+                    <div style={{
+                      maxWidth: "80%", padding: "9px 14px", borderRadius: b.from === "jenny" ? "18px 18px 18px 4px" : "18px 4px 18px 18px",
+                      background: b.from === "jenny" ? "#1e1e2e" : "#4f46e5",
+                      color: "#e4e4e7", fontSize: 14, lineHeight: 1.5
+                    }}>{b.text}</div>
                   </div>
                 ))}
                 {typing && (
-                  <div className="flex justify-start">
-                    <div className="bg-[#1e1e2e] px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center">
-                      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                      <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                  <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                    <div style={{ background: "#1e1e2e", padding: "10px 16px", borderRadius: "18px 18px 18px 4px", display: "flex", gap: 4, alignItems: "center" }}>
+                      {[0, 150, 300].map(d => (
+                        <div key={d} className={`dot-${d === 0 ? 1 : d === 150 ? 2 : 3}`} style={{ width: 6, height: 6, borderRadius: "50%", background: "#71717a" }} />
+                      ))}
                     </div>
                   </div>
                 )}
@@ -131,29 +120,34 @@ export default function LandingPage() {
               </div>
 
               {/* Input */}
-              <div className="px-3 py-3 border-t border-white/5 bg-[#0f0f18]">
+              <div style={{ padding: "12px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0d0d16" }}>
                 {phase === "done" ? (
-                  <Link
-                    to={routes.SignupRoute.build()}
-                    className="block w-full text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-2.5 rounded-xl transition-all text-sm"
-                  >
+                  <Link to={routes.SignupRoute.build()} style={{
+                    display: "block", width: "100%", textAlign: "center", textDecoration: "none",
+                    background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff",
+                    fontWeight: 600, padding: "11px", borderRadius: 12, fontSize: 14
+                  }}>
                     Get my AI receptionist →
                   </Link>
                 ) : (
-                  <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="flex gap-2">
+                  <form onSubmit={e => { e.preventDefault(); send(); }} style={{ display: "flex", gap: 8 }}>
                     <input
                       value={userInput}
                       onChange={e => setUserInput(e.target.value)}
                       placeholder={phase === "waiting" ? "Type your answer..." : ""}
                       disabled={phase !== "waiting"}
-                      className="flex-1 bg-[#1a1a28] border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-indigo-500/50 disabled:opacity-40"
+                      style={{
+                        flex: 1, background: "#1a1a28", border: "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: 10, padding: "8px 14px", fontSize: 13, color: "#fff",
+                        outline: "none", opacity: phase !== "waiting" ? 0.4 : 1
+                      }}
                     />
-                    <button
-                      type="submit"
-                      disabled={phase !== "waiting" || !userInput.trim()}
-                      className="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 flex items-center justify-center transition-colors"
-                    >
-                      <svg className="w-4 h-4 text-white rotate-90" fill="currentColor" viewBox="0 0 24 24">
+                    <button type="submit" disabled={phase !== "waiting" || !userInput.trim()} style={{
+                      width: 38, height: 38, borderRadius: 10, background: "#4f46e5",
+                      border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                      opacity: (phase !== "waiting" || !userInput.trim()) ? 0.3 : 1
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white" style={{ transform: "rotate(90deg)" }}>
                         <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
                       </svg>
                     </button>
@@ -163,84 +157,79 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Tagline below chat */}
-          <div className="text-center mt-8 space-y-2">
-            <h1 className="text-2xl font-bold text-white">Your AI receptionist, on WhatsApp</h1>
-            <p className="text-zinc-500 text-sm">Set up in 5 minutes. No code. No hiring. $29/mo.</p>
+          {/* Tagline */}
+          <div style={{ textAlign: "center", marginTop: 32 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>Your AI receptionist, on WhatsApp</h1>
+            <p style={{ color: "#71717a", fontSize: 14, marginTop: 6 }}>Set up in 5 minutes. No code. No hiring. $29/mo.</p>
           </div>
         </div>
       </div>
 
-      {/* Social proof strip */}
-      <div className="border-t border-white/5 py-6 px-4">
-        <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-8 text-center">
-          {[
-            { n: "24/7", label: "Always on" },
-            { n: "< 3s", label: "Response time" },
-            { n: "5 min", label: "Setup time" },
-            { n: "$0", label: "To start" },
-          ].map(({ n, label }) => (
-            <div key={label}>
-              <p className="text-2xl font-bold text-white">{n}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
+      {/* Stats */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "32px 16px" }}>
+        <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 40, textAlign: "center" }}>
+          {[["24/7", "Always on"], ["< 3s", "Response time"], ["5 min", "Setup time"], ["$0", "To start"]].map(([n, l]) => (
+            <div key={l}>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "#fff" }}>{n}</div>
+              <div style={{ fontSize: 12, color: "#71717a", marginTop: 2 }}>{l}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Features */}
-      <div className="border-t border-white/5 py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-center text-2xl font-bold text-white mb-2">Everything your receptionist does. Automatically.</h2>
-          <p className="text-center text-zinc-500 text-sm mb-10">On WhatsApp. On calls. Around the clock.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "64px 16px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Everything your receptionist does. Automatically.</h2>
+          <p style={{ textAlign: "center", color: "#71717a", fontSize: 14, marginBottom: 40 }}>On WhatsApp. On calls. Around the clock.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
             {[
-              { emoji: "💬", title: "Answers messages", desc: "Replies to every WhatsApp message instantly, in your voice." },
-              { emoji: "📞", title: "Handles calls", desc: "Picks up every call, takes messages, routes urgent ones to you." },
-              { emoji: "📅", title: "Books appointments", desc: "Schedules meetings and sends reminders automatically." },
-              { emoji: "🌙", title: "Works nights & weekends", desc: "No overtime, no sick days. Always available." },
-              { emoji: "🧠", title: "Knows your business", desc: "Trained on your products, prices, FAQs, and policies." },
-              { emoji: "💳", title: "Collects payments", desc: "Sends invoices and payment links right in the chat." },
-            ].map(({ emoji, title, desc }) => (
-              <div key={title} className="bg-[#111118] border border-white/5 rounded-xl p-5 hover:border-indigo-500/30 transition-colors">
-                <div className="text-2xl mb-3">{emoji}</div>
-                <h3 className="font-semibold text-white text-sm mb-1">{title}</h3>
-                <p className="text-zinc-500 text-xs leading-relaxed">{desc}</p>
+              ["💬", "Answers messages", "Replies to every WhatsApp message instantly, in your voice."],
+              ["📞", "Handles calls", "Picks up every call, takes messages, routes urgent ones to you."],
+              ["📅", "Books appointments", "Schedules meetings and sends reminders automatically."],
+              ["🌙", "Works nights & weekends", "No overtime, no sick days. Always available."],
+              ["🧠", "Knows your business", "Trained on your products, prices, FAQs, and policies."],
+              ["💳", "Collects payments", "Sends invoices and payment links right in the chat."],
+            ].map(([emoji, title, desc]) => (
+              <div key={title as string} style={{ background: "#111118", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: 20 }}>
+                <div style={{ fontSize: 24, marginBottom: 10 }}>{emoji}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: "#fff", marginBottom: 4 }}>{title}</div>
+                <div style={{ fontSize: 12, color: "#71717a", lineHeight: 1.6 }}>{desc}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Pricing preview */}
-      <div className="border-t border-white/5 py-16 px-4 bg-[#0d0d14]">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">Simple pricing</h2>
-          <p className="text-zinc-500 text-sm mb-10">Start free. Upgrade when you need more.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Pricing */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "64px 16px", background: "#0d0d14" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <h2 style={{ textAlign: "center", fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Simple pricing</h2>
+          <p style={{ textAlign: "center", color: "#71717a", fontSize: 14, marginBottom: 40 }}>Start free. Upgrade when you need more.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
             {[
-              { name: "Free", price: "$0", desc: "Try it out", features: ["1 AI agent", "50 messages/mo", "Business hours only", "Talk to Jenny"], cta: "Start free", highlight: false },
-              { name: "Pro", price: "$29", desc: "/month", features: ["1 AI agent", "Unlimited messages", "24/7 availability", "PSTN calling included", "Custom voice & name"], cta: "Get Pro", highlight: true },
-              { name: "Business", price: "$79", desc: "/month", features: ["3 AI agents", "Unlimited everything", "Priority support", "White-label ready", "API access"], cta: "Get Business", highlight: false },
-            ].map(({ name, price, desc, features, cta, highlight }) => (
-              <div key={name} className={`rounded-xl p-6 border ${highlight ? "bg-indigo-600/10 border-indigo-500/40" : "bg-[#111118] border-white/5"}`}>
-                <p className="text-sm text-zinc-400 mb-1">{name}</p>
-                <div className="flex items-end gap-1 mb-1">
-                  <span className="text-3xl font-bold text-white">{price}</span>
-                  <span className="text-zinc-500 text-sm mb-1">{desc}</span>
+              { name: "Free", price: "$0", sub: "forever", features: ["1 AI agent", "50 messages/mo", "Business hours only", "Talk to Jenny"], highlight: false },
+              { name: "Pro", price: "$29", sub: "/month", features: ["1 AI agent", "Unlimited messages", "24/7 availability", "PSTN calling", "Custom voice & name"], highlight: true },
+              { name: "Business", price: "$79", sub: "/month", features: ["3 AI agents", "Unlimited everything", "Priority support", "White-label ready", "API access"], highlight: false },
+            ].map(({ name, price, sub, features, highlight }) => (
+              <div key={name} style={{ background: highlight ? "rgba(79,70,229,0.1)" : "#111118", border: `1px solid ${highlight ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.06)"}`, borderRadius: 16, padding: 24 }}>
+                <div style={{ fontSize: 13, color: "#71717a", marginBottom: 4 }}>{name}</div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 4, marginBottom: 16 }}>
+                  <span style={{ fontSize: 32, fontWeight: 700, color: "#fff" }}>{price}</span>
+                  <span style={{ fontSize: 13, color: "#71717a", marginBottom: 4 }}>{sub}</span>
                 </div>
-                <ul className="space-y-2 my-5">
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", display: "flex", flexDirection: "column", gap: 8 }}>
                   {features.map(f => (
-                    <li key={f} className="text-xs text-zinc-400 flex items-center gap-2">
-                      <span className="text-indigo-400">✓</span> {f}
+                    <li key={f} style={{ fontSize: 12, color: "#a1a1aa", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: "#818cf8" }}>✓</span> {f}
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to={routes.SignupRoute.build()}
-                  className={`block w-full text-center py-2 rounded-lg text-sm font-medium transition-colors ${highlight ? "bg-indigo-600 hover:bg-indigo-500 text-white" : "bg-white/5 hover:bg-white/10 text-zinc-300"}`}
-                >
-                  {cta}
+                <Link to={routes.SignupRoute.build()} style={{
+                  display: "block", textAlign: "center", textDecoration: "none", padding: "9px 0", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                  background: highlight ? "#4f46e5" : "rgba(255,255,255,0.06)", color: highlight ? "#fff" : "#a1a1aa"
+                }}>
+                  {name === "Free" ? "Start free" : `Get ${name}`}
                 </Link>
               </div>
             ))}
@@ -249,21 +238,23 @@ export default function LandingPage() {
       </div>
 
       {/* Final CTA */}
-      <div className="border-t border-white/5 py-20 px-4 text-center">
-        <h2 className="text-3xl font-bold text-white mb-3">Ready to hire your AI receptionist?</h2>
-        <p className="text-zinc-500 mb-8 text-sm">Set up in 5 minutes. First month free. Cancel anytime.</p>
-        <Link
-          to={routes.SignupRoute.build()}
-          className="inline-block bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-indigo-500/20"
-        >
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "80px 16px", textAlign: "center" }}>
+        <h2 style={{ fontSize: 28, fontWeight: 700, color: "#fff", marginBottom: 12 }}>Ready to hire your AI receptionist?</h2>
+        <p style={{ color: "#71717a", fontSize: 14, marginBottom: 32 }}>Set up in 5 minutes. First month free. Cancel anytime.</p>
+        <Link to={routes.SignupRoute.build()} style={{
+          display: "inline-block", textDecoration: "none", background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+          color: "#fff", fontWeight: 600, padding: "14px 32px", borderRadius: 12, fontSize: 14,
+          boxShadow: "0 8px 32px rgba(79,70,229,0.3)"
+        }}>
           Get Started Free →
         </Link>
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-6 px-4 text-center text-xs text-zinc-600">
-        <p>© 2026 EPIC Communications Inc · <a href="mailto:hello@epic.dm" className="hover:text-zinc-400">hello@epic.dm</a></p>
-      </footer>
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "24px 16px", textAlign: "center", fontSize: 12, color: "#52525b" }}>
+        © 2026 EPIC Communications Inc ·{" "}
+        <a href="mailto:hello@epic.dm" style={{ color: "#71717a", textDecoration: "none" }}>hello@epic.dm</a>
+      </div>
 
     </div>
   );
