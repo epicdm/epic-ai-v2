@@ -1,9 +1,9 @@
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 
 // GET /api/voice/context?phone_number=+1767xxx
 // Called by LiveKit agent to load per-customer personality
-export const voiceContext = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const voiceContext = async (req: Request, res: Response) => {
   try {
     const { phone_number } = req.query
     if (!phone_number) return res.status(400).json({ error: 'phone_number required' })

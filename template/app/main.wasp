@@ -40,7 +40,7 @@ app EpicAI {
 
   db: {
     seeds: [
-      import { seedMockUsers } from "@src/server/scripts/dbSeeds",
+      // No seeds needed for BFF
     ]
   },
 
