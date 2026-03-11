@@ -1,7 +1,7 @@
 import { LogIn, Menu } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Link as ReactRouterLink } from "react-router";
-import { useAuth } from "wasp/client/auth";
+import { useAuth } from "../../../lib/useClerkAuth";
 import { Link as WaspRouterLink, routes } from "wasp/client/router";
 import {
   Sheet,
@@ -139,7 +139,7 @@ function NavBarDesktopUserDropdown({ isScrolled }: { isScrolled: boolean }) {
         </WaspRouterLink>
       ) : (
         <div className="ml-3">
-          <UserDropdown user={user} />
+          <UserDropdown />
         </div>
       )}
     </div>
@@ -199,10 +199,7 @@ function NavBarMobileMenu({
                   </WaspRouterLink>
                 ) : (
                   <ul className="space-y-2">
-                    <UserMenuItems
-                      user={user}
-                      onItemClick={() => setMobileMenuOpen(false)}
-                    />
+                    <UserMenuItems />
                   </ul>
                 )}
               </div>

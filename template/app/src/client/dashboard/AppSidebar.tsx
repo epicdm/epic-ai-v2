@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router";
-import { useAuth } from "wasp/client/auth";
+import { useAuth } from "../../lib/useClerkAuth";
+import { useClerk } from "@clerk/clerk-react";
 import {
   LayoutDashboard, Bot, MessageCircle, Phone, Radio,
   Users, BookOpen, Plug, CreditCard, Settings,
@@ -14,23 +15,23 @@ const NAV = [
   {
     label: "WORKSPACE",
     items: [
-      { href: "/dashboard/agents", label: "Agents", icon: Bot },
-      { href: "/dashboard/conversations", label: "Conversations", icon: MessageCircle },
-      { href: "/dashboard/calls", label: "Calls", icon: Phone },
-      { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio },
+      { href: "/dashboard/agents", label: "Agents", icon: Bot , exact: false },
+      { href: "/dashboard/conversations", label: "Conversations", icon: MessageCircle , exact: false },
+      { href: "/dashboard/calls", label: "Calls", icon: Phone , exact: false },
+      { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio , exact: false },
     ],
   },
   {
     label: "MANAGE",
     items: [
-      { href: "/dashboard/contacts", label: "Contacts", icon: Users },
+      { href: "/dashboard/contacts", label: "Contacts", icon: Users , exact: false },
     ],
   },
   {
     label: "ACCOUNT",
     items: [
-      { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-      { href: "/dashboard/settings", label: "Settings", icon: Settings },
+      { href: "/dashboard/billing", label: "Billing", icon: CreditCard , exact: false },
+      { href: "/dashboard/settings", label: "Settings", icon: Settings , exact: false },
     ],
   },
 ];
@@ -42,7 +43,8 @@ const PLAN_BADGE: Record<string, string> = {
 };
 
 export default function AppSidebar() {
-  const { data: user } = useAuth();
+  const { data: user } = useAuth()
+  const { signOut } = useClerk();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem("sidebar-collapsed") === "true"; } catch { return false; }
@@ -113,7 +115,7 @@ export default function AppSidebar() {
               </p>
             )}
             {section.items.map((item) => {
-              const active = isActive(item.href, item.exact);
+              const active = isActive(item.href, 'exact' in item && item.exact);
               const Icon = item.icon;
               return (
                 <Link
@@ -164,9 +166,9 @@ export default function AppSidebar() {
                 {plan}
               </span>
             </div>
-            <a href="/api/auth/logout" className="text-zinc-600 hover:text-red-400 transition-colors">
+            <button onClick={async () => { await signOut(); window.location.href = "/"; }} style={{cursor:"pointer",background:"none",border:"none",padding:0}} className="text-zinc-600 hover:text-red-400 transition-colors">
               <LogOut className="w-4 h-4" />
-            </a>
+            </button>
           </div>
         )}
       </div>
