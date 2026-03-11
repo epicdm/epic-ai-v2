@@ -1,9 +1,17 @@
-import { type GetAgents, type GetAgent, type GetConversations, type GetContacts, type GetReminders, type GetBills, type GetTodos, type GetBroadcasts, type GetPaginatedUsers, type GetDailyStats } from 'wasp/server/operations'
+import { type GetMyAgents, type GetAgents, type GetAgent, type GetConversations, type GetContacts, type GetReminders, type GetBills, type GetTodos, type GetBroadcasts, type GetPaginatedUsers, type GetDailyStats } from 'wasp/server/operations'
 import { prisma } from 'wasp/server'
 
 const PLAN_LIMITS: Record<string, number> = { free: 1, pro: 3, business: Infinity }
 
 // ─── Agents ──────────────────────────────────────────────────
+
+export const getMyAgents: GetMyAgents<void, any[]> = async (_args, context) => {
+  if (!context.user) throw new Error('Not authenticated')
+  return prisma.agent.findMany({
+    where: { userId: context.user.id },
+    orderBy: { createdAt: 'asc' },
+  })
+}
 
 export const getAgents: GetAgents<void, any[]> = async (_args, context) => {
   if (!context.user) throw new Error('Not authenticated')

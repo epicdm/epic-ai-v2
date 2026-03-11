@@ -153,6 +153,18 @@ page CreateAgentPage {
   component: import CreateAgentPage from "@src/client/onboarding/CreateAgentPage"
 }
 
+route OnboardingRoute { path: "/onboarding", to: OnboardingPage }
+page OnboardingPage {
+  authRequired: true,
+  component: import { OnboardingPage } from "@src/client/OnboardingPage"
+}
+
+route UpgradeRoute { path: "/upgrade", to: UpgradePage }
+page UpgradePage {
+  authRequired: true,
+  component: import { UpgradePage } from "@src/client/UpgradePage"
+}
+
 route PricingRoute { path: "/pricing", to: PricingPage }
 page PricingPage {
   component: import PricingPage from "@src/client/PricingPage"
@@ -184,6 +196,11 @@ page NotFoundPage {
 }
 
 // ─── Queries ─────────────────────────────────────────────────
+
+query getMyAgents {
+  fn: import { getMyAgents } from "@src/server/queries",
+  entities: [Agent]
+}
 
 query getAgents {
   fn: import { getAgents } from "@src/server/queries",
@@ -342,20 +359,26 @@ api whatsappWebhook {
 }
 
 api fiservWebhook {
-  fn: import { fiservWebhook } from "@src/server/payment/fiservWebhook",
+  fn: import { fiservWebhook } from "@src/server/payment/fiserv",
   httpRoute: (POST, "/api/billing/webhook"),
   auth: false
 }
 
 api fiservCheckout {
-  fn: import { fiservCheckout } from "@src/server/payment/fiservCheckout",
+  fn: import { createCheckout } from "@src/server/payment/fiserv",
   httpRoute: (POST, "/api/billing/checkout"),
   auth: true
 }
 
-api getUserPlan {
-  fn: import { getUserPlan } from "@src/server/payment/fiservCheckout",
-  httpRoute: (GET, "/api/billing/plan"),
+api agentStatus {
+  fn: import { getAgentStatus } from "@src/server/agentStatus",
+  httpRoute: (GET, "/api/agent/:agentId/status"),
+  auth: true
+}
+
+api getMyAgentsApi {
+  fn: import { getMyAgentsHandler } from "@src/server/agentStatus",
+  httpRoute: (GET, "/api/agents"),
   auth: true
 }
 

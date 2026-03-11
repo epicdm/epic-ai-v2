@@ -7,235 +7,351 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ─── Wasp required + our fields ──────────────────────────────
-
+// ─── User ─────────────────────────────────────────────────────
 model User {
-  id                        String    @id @default(uuid())
-  createdAt                 DateTime  @default(now())
-  email                     String?   @unique
-  username                  String?   @unique
-  isAdmin                   Boolean   @default(false)
+  id                String    @id @default(cuid())
+  clerkId           String    @unique
+  email             String    @unique
+  plan              String    @default("free")   // "free" | "pro" | "business"
+  notificationPrefs Json      @default("{\"summaryInterval\":\"2hr\",\"quietStart\":\"22:00\",\"quietEnd\":\"08:00\",\"instantAlerts\":[\"hot_lead\",\"negative_sentiment\",\"payment_moment\",\"call_request\"]}")
+  lastSummaryAt     DateTime?
+  isAdmin           Boolean   @default(false)
+  createdAt         DateTime  @default(now())
 
-  // Payment
-  paymentProcessorUserId    String?   @unique
-  subscriptionStatus        String?   // 'active', 'cancel_at_period_end', 'past_due', 'deleted'
-  subscriptionPlan          String?   @default("free") // 'free', 'pro', 'business'
-  pendingPlan               String?
-  pendingPlanSince          DateTime?
-  datePaid                  DateTime?
-  lastBillingDate           DateTime?
-  credits                   Int       @default(0)
-
-  // BFF fields
-  whatsappPhone             String?
-
-  // Relations
-  agents                    Agent[]
-  contacts                  Contact[]
-  conversations             Conversation[]
-  reminders                 Reminder[]
-  bills                     Bill[]
-  todos                     Todo[]
-  broadcasts                Broadcast[]
-  pushSubscriptions         PushSubscription[]
-  contactFormMessages       ContactFormMessage[]
+  agents            Agent[]
+  contacts          Contact[]
+  conversations     Conversation[]
+  sentSummaries     SentSummary[]
+  campaigns         Campaign[]
+  callLogs          CallLog[]
+  contactFormMessages ContactFormMessage[]
+  pushSubscriptions PushSubscription[]
 }
 
+// ─── Agent ────────────────────────────────────────────────────
 model Agent {
-  id             String   @id @default(uuid())
+  id                      String    @id @default(cuid())
+  userId                  String
+  name                    String
+  template                String    // "receptionist"|"sales"|"collections"|"concierge"|"support"|"assistant"
+  status                  String    @default("draft") // "draft"|"active"|"paused"|"error"
+  activationCode          String?   @unique
+  activationCodeCreatedAt DateTime?
+  ownerPhone              String?   // owner's personal WA phone — single source of truth
+  shareCode               String    @unique
+  onboardingStatus        String    @default("pending") // "pending"|"in_progress"|"complete"|"timed_out"
+  onboardingStep          Int       @default(0)  // 0-5
+  config                  Json      @default("{}") // { knowledge: { businessName, hours, services, faq, escalation, restrictions }, tone, guardrails, quietHours, language, awayMessage }
+  approvalMode            String    @default("auto") // "auto"|"notify"|"confirm"
+  activatedAt             DateTime?
+  deployedAt              DateTime? // legacy V1 field — set = activatedAt in V2
+  didNumber               String?
+  didSipUser              String?
+  didSipPass              String?
+  didSipServer            String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  whatsAppMessages  WhatsAppMessage[]
+  activities        AgentActivity[]
+  agentContacts     AgentContact[]
+  campaigns         Campaign[]
+  callLogs          CallLog[]
+  knowledgeSources  KnowledgeSource[]
+  conversations     Conversation[]
+  messageQueues     MessageQueue[]
+  messageDrafts     MessageDraft[]
+  sentSummaries     SentSummary[]
+
+  @@index([userId])
+  @@index([ownerPhone])
+  @@index([shareCode])
+}
+
+// ─── WhatsAppMessage ──────────────────────────────────────────
+model WhatsAppMessage {
+  id               String   @id @default(cuid())
+  agentId          String
+  phone            String
+  role             String   // "user" | "assistant"
+  content          String
+  channel          String   @default("whatsapp") // "whatsapp"|"facebook"|"instagram"
+  sessionType      String   @default("customer") // CRITICAL: "owner" | "customer"
+  escalationFlag   String?  // "hot_lead"|"negative_sentiment"|"payment_moment"|"stuck"|"out_of_scope"|"call_request"
+  replyToMessageId String?
+  metaMessageId    String?
+  timestamp        DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, phone, sessionType, timestamp])
+  @@index([metaMessageId])
+}
+
+// ─── Conversation ─────────────────────────────────────────────
+model Conversation {
+  id                  String    @id @default(cuid())
+  agentId             String
+  userId              String
+  contactId           String?
+  phone               String
+  channel             String    @default("whatsapp")
+  sessionType         String    @default("customer") // "owner" | "customer"
+  status              String    @default("active")   // "active"|"resolved"|"escalated"
+  escalationFlag      String?
+  lastMessageAt       DateTime  @default(now())
+  lastMessagePreview  String?
+  createdAt           DateTime  @default(now())
+
+  agent    Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contact  Contact? @relation(fields: [contactId], references: [id])
+  drafts   MessageDraft[]
+
+  @@index([agentId, sessionType])
+  @@index([agentId, phone])
+}
+
+// ─── Contact ──────────────────────────────────────────────────
+model Contact {
+  id               String    @id @default(cuid())
+  userId           String
+  primaryAgentId   String?
+  name             String?
+  phone            String
+  email            String?
+  channel          String    @default("whatsapp")
+  tags             String[]  @default([])
+  stage            String?
+  ownerNotes       String?   // PRIVATE — never injected into agent prompts
+  customFields     Json?
+  doNotContact     Boolean   @default(false)
+  doNotContactAt   DateTime?
+  createdAt        DateTime  @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentContacts AgentContact[]
+  conversations Conversation[]
+
+  @@index([userId, phone])
+}
+
+// ─── AgentContact (join) ──────────────────────────────────────
+model AgentContact {
+  id             String   @id @default(cuid())
+  agentId        String
+  contactId      String
+  firstContactAt DateTime @default(now())
+  lastContactAt  DateTime @default(now())
+
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, contactId])
+}
+
+// ─── AgentActivity ────────────────────────────────────────────
+model AgentActivity {
+  id             String   @id @default(cuid())
+  agentId        String
+  conversationId String?
+  type           String   // "intent"|"error"|"escalation"|"health"|"onboarding"
+  summary        String
+  metadata       Json?
+  resolved       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, type, createdAt])
+}
+
+// ─── MessageQueue (pg-boss backed) ───────────────────────────
+model MessageQueue {
+  id            String    @id @default(cuid())
+  agentId       String
+  phone         String
+  content       String
+  channel       String    @default("whatsapp")
+  sessionType   String
+  metaMessageId String?
+  priority      Int       @default(1) // 3=Business, 2=Pro, 1=Free
+  status        String    @default("pending") // "pending"|"processing"|"done"|"failed"
+  attempts      Int       @default(0)
+  lastAttemptAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([status, priority, createdAt])
+}
+
+// ─── SentSummary ─────────────────────────────────────────────
+model SentSummary {
+  id            String   @id @default(cuid())
+  userId        String
+  agentId       String
+  metaMessageId String
+  sentAt        DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([metaMessageId])
+}
+
+// ─── MessageDraft (Confirm mode) ─────────────────────────────
+model MessageDraft {
+  id             String    @id @default(cuid())
+  agentId        String
+  conversationId String
+  draftText      String
+  status         String    @default("pending") // "pending"|"approved"|"rejected"|"edited"
+  ownerEdit      String?
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+
+  agent        Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+// ─── Campaign ─────────────────────────────────────────────────
+model Campaign {
+  id             String   @id @default(cuid())
   userId         String
+  agentId        String
   name           String
-  template       String?
-  purpose        String?
-  tone           String?
-  tools          String   @default("[]")
-  approvalMode   String   @default("confirm")
-  config         Json?
-  guardrails     Json?
-  soul           String?
-  status         String   @default("draft")
-  whatsappStatus String   @default("not_connected")
-  whatsappNumber String?
-  phoneNumber    String?
-  phoneStatus    String   @default("pending")
-  didNumber      String?
-  didSipUser     String?
-  didSipPass     String?
-  didSipServer   String?
-  inboundRouting String   @default("whatsapp")
-  isActive       Boolean  @default(true)
-  activationCode String?  @unique
-  whatsappPhone  String?
-  activatedAt    DateTime?
-  deployedAt     DateTime?
+  type           String   // "sales"|"collections"|"drip"|"trigger"
+  status         String   @default("draft") // "draft"|"active"|"paused"|"completed"
+  audienceFilter Json     @default("{}")
+  goal           String   // "booking"|"payment"|"reply"|"custom"
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversations    Conversation[]
-  activities       AgentActivity[]
-  reminders        Reminder[]
-  bills            Bill[]
-  todos            Todo[]
-  whatsAppMessages WhatsAppMessage[]
-  broadcasts       Broadcast[]
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent       Agent                @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  steps       CampaignStep[]
+  enrollments CampaignEnrollment[]
 }
 
+model CampaignStep {
+  id         String @id @default(cuid())
+  campaignId String
+  stepNumber Int
+  delayDays  Int
+  message    String
+  onReply    String @default("agent_takeover") // "agent_takeover"|"next_step"|"end"
+  onNoReply  String @default("next_step")      // "next_step"|"end"|"mark_cold"
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model CampaignEnrollment {
+  id          String    @id @default(cuid())
+  campaignId  String
+  contactId   String
+  currentStep Int       @default(0)
+  status      String    @default("active") // "active"|"exited"|"completed"|"cold"
+  enrolledAt  DateTime  @default(now())
+  exitedAt    DateTime?
+  exitReason  String?   // "goal_met"|"replied"|"manual"|"sequence_end"
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+// ─── CallLog ──────────────────────────────────────────────────
+model CallLog {
+  id           String   @id @default(cuid())
+  agentId      String
+  userId       String
+  direction    String   // "inbound" | "outbound"
+  from         String
+  to           String
+  channel      String   // "whatsapp"|"pstn"|"browser"
+  duration     Int      @default(0)
+  status       String   // "answered"|"transferred"|"missed"|"voicemail"
+  handledBy    String   // "agent" | "human"
+  recordingUrl String?
+  transcript   String?
+  keywords     String[] @default([])
+  outcome      String?  // "resolved"|"escalated"|"voicemail"|"missed"
+  createdAt    DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── KnowledgeSource ─────────────────────────────────────────
+model KnowledgeSource {
+  id            String    @id @default(cuid())
+  agentId       String
+  type          String    // "profile"|"document"|"url"|"facebook"|"instagram"|"google"
+  name          String
+  content       String?
+  filePath      String?
+  url           String?
+  embedStatus   String    @default("pending") // "pending"|"processing"|"ready"|"failed"
+  lastScrapedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+// ─── Personal Assistant models ────────────────────────────────
 model Reminder {
-  id        String   @id @default(uuid())
+  id        String    @id @default(cuid())
   userId    String
   agentId   String
-  text      String
-  datetime  DateTime
-  recurring String?
-  sent      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  title     String
+  dueAt     DateTime
+  recurring String?   // "daily"|"weekly"|"monthly"
+  done      Boolean   @default(false)
+  createdAt DateTime  @default(now())
 }
 
 model Bill {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   userId    String
   agentId   String
   name      String
   amount    Float
   dueDate   DateTime
-  recurring String?
   paid      Boolean  @default(false)
+  recurring Boolean  @default(false)
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
 }
 
 model Todo {
-  id        String   @id @default(uuid())
+  id        String    @id @default(cuid())
   userId    String
   agentId   String
-  text      String
-  done      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  title     String
+  done      Boolean   @default(false)
+  dueAt     DateTime?
+  priority  String    @default("normal") // "low"|"normal"|"high"
+  createdAt DateTime  @default(now())
 }
 
-model AgentActivity {
-  id        String   @id @default(uuid())
-  agentId   String
-  type      String
-  summary   String
-  metadata  Json?
-  createdAt DateTime @default(now())
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-
-  @@index([agentId, createdAt])
-}
-
-model Contact {
-  id        String   @id @default(uuid())
-  userId    String
-  name      String
-  phone     String?
-  email     String?
-  notes     String?
-  tags      String   @default("[]")
-  createdAt DateTime @default(now())
-
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversations Conversation[]
-}
-
-model Conversation {
-  id        String   @id @default(uuid())
-  userId    String
-  agentId   String
-  contactId String
-  channel   String   @default("whatsapp")
-  status    String   @default("active")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agent    Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  contact  Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  messages Message[]
-}
-
-model Message {
-  id             String    @id @default(uuid())
-  conversationId String
-  direction      String
-  text           String
-  status         String    @default("sent")
-  approvedAt     DateTime?
-  sentAt         DateTime?
-  createdAt      DateTime  @default(now())
-
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-}
-
-model WhatsAppMessage {
-  id        String   @id @default(uuid())
-  agentId   String
-  phone     String
-  role      String
-  content   String
-  timestamp DateTime @default(now())
-
-  agent Agent @relation(fields: [agentId], references: [id])
-
-  @@index([agentId, phone, timestamp])
-}
-
-model Broadcast {
-  id             String    @id @default(uuid())
-  userId         String
-  agentId        String
-  name           String
-  message        String
-  status         String    @default("draft")
-  recipientCount Int       @default(0)
-  sentCount      Int       @default(0)
-  failedCount    Int       @default(0)
-  scheduledAt    DateTime?
-  sentAt         DateTime?
-  createdAt      DateTime  @default(now())
-
-  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agent      Agent                @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  recipients BroadcastRecipient[]
-}
-
-model BroadcastRecipient {
-  id          String    @id @default(uuid())
-  broadcastId String
-  phone       String
-  name        String?
-  status      String    @default("pending")
-  sentAt      DateTime?
-  error       String?
-
-  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
-}
-
+// ─── System ───────────────────────────────────────────────────
 model PushSubscription {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   userId    String
   endpoint  String   @unique
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// ─── Wasp built-in models ─────────────────────────────────────
-
 model ContactFormMessage {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  content     String
-  isRead      Boolean  @default(false)
-  repliedAt   DateTime?
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
