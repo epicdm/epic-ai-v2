@@ -87,83 +87,21 @@ export const deleteTodo: DeleteTodo<{ id: string }, void> = async ({ id }, conte
   await prisma.todo.deleteMany({ where: { id, userId: context.user.id } })
 }
 
-// ─── Broadcasts ───────────────────────────────────────────────
+// ─── Broadcasts (stub — Campaigns backlog) ────────────────────
 
-export const createBroadcast: CreateBroadcast<{ agentId: string; name: string; message: string; phones: string[] }, any> = async ({ agentId, name, message, phones }, context) => {
+export const createBroadcast: CreateBroadcast<{ agentId: string; name: string; message: string; phones: string[] }, any> = async (_args, context) => {
   if (!context.user) throw new Error('Not authenticated')
-  const plan = getPlan(context.user)
-  if (plan === 'free') throw new Error('Broadcasts require Pro or Business plan')
-  if (plan === 'pro' && phones.length > 500) throw new Error('Pro plan: max 500 recipients per broadcast')
-
-  const broadcast = await prisma.broadcast.create({
-    data: {
-      userId: context.user.id,
-      agentId,
-      name,
-      message,
-      recipientCount: phones.length,
-      recipients: {
-        create: phones.map((phone) => ({ phone })),
-      },
-    },
-    include: { recipients: true },
-  })
-  return broadcast
+  throw new Error('Campaigns not yet implemented — coming soon!')
 }
 
-export const sendBroadcast: SendBroadcast<{ id: string }, { sentCount: number; failedCount: number }> = async ({ id }, context) => {
+export const sendBroadcast: SendBroadcast<{ id: string }, { sentCount: number; failedCount: number }> = async (_args, context) => {
   if (!context.user) throw new Error('Not authenticated')
-  const broadcast = await prisma.broadcast.findFirst({
-    where: { id, userId: context.user.id },
-    include: { recipients: true, agent: true },
-  })
-  if (!broadcast) throw new Error('Broadcast not found')
-
-  await prisma.broadcast.update({ where: { id }, data: { status: 'sending' } })
-
-  const WA_TOKEN = process.env.WHATSAPP_TOKEN!
-  const PHONE_ID = process.env.WHATSAPP_PHONE_ID!
-
-  let sentCount = 0
-  let failedCount = 0
-
-  for (const recipient of broadcast.recipients) {
-    try {
-      const res = await fetch(`https://graph.facebook.com/v18.0/${PHONE_ID}/messages`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${WA_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: recipient.phone,
-          type: 'text',
-          text: { body: broadcast.message },
-        }),
-      })
-      if (res.ok) {
-        await prisma.broadcastRecipient.update({ where: { id: recipient.id }, data: { status: 'sent', sentAt: new Date() } })
-        sentCount++
-      } else {
-        const err = await res.text()
-        await prisma.broadcastRecipient.update({ where: { id: recipient.id }, data: { status: 'failed', error: err.slice(0, 200) } })
-        failedCount++
-      }
-    } catch (e: any) {
-      await prisma.broadcastRecipient.update({ where: { id: recipient.id }, data: { status: 'failed', error: e.message } })
-      failedCount++
-    }
-  }
-
-  await prisma.broadcast.update({
-    where: { id },
-    data: { status: failedCount === broadcast.recipients.length ? 'failed' : 'sent', sentCount, failedCount, sentAt: new Date() },
-  })
-
-  return { sentCount, failedCount }
+  throw new Error('Campaigns not yet implemented — coming soon!')
 }
 
-export const deleteBroadcast: DeleteBroadcast<{ id: string }, void> = async ({ id }, context) => {
+export const deleteBroadcast: DeleteBroadcast<{ id: string }, void> = async (_args, context) => {
   if (!context.user) throw new Error('Not authenticated')
-  await prisma.broadcast.deleteMany({ where: { id, userId: context.user.id } })
+  throw new Error('Campaigns not yet implemented — coming soon!')
 }
 
 // ─── Contacts ─────────────────────────────────────────────────

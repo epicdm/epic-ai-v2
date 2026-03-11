@@ -214,7 +214,7 @@ query getAgent {
 
 query getConversations {
   fn: import { getConversations } from "@src/server/queries",
-  entities: [Conversation, Message, Contact, Agent]
+  entities: [Conversation, WhatsAppMessage, Contact, Agent]
 }
 
 query getContacts {
@@ -239,7 +239,7 @@ query getTodos {
 
 query getBroadcasts {
   fn: import { getBroadcasts } from "@src/server/queries",
-  entities: [Broadcast, BroadcastRecipient]
+  entities: [Campaign]
 }
 
 query getPaginatedUsers {
@@ -316,17 +316,17 @@ action deleteTodo {
 
 action createBroadcast {
   fn: import { createBroadcast } from "@src/server/actions",
-  entities: [Broadcast, BroadcastRecipient]
+  entities: [Campaign]
 }
 
 action sendBroadcast {
   fn: import { sendBroadcast } from "@src/server/actions",
-  entities: [Broadcast, BroadcastRecipient, Agent]
+  entities: [Campaign, Agent]
 }
 
 action deleteBroadcast {
   fn: import { deleteBroadcast } from "@src/server/actions",
-  entities: [Broadcast]
+  entities: [Campaign]
 }
 
 action createContact {
