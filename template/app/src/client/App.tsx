@@ -1,4 +1,4 @@
-import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
+import { ClerkProvider } from '@clerk/clerk-react'
 import { useEffect, useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { Toaster } from "../client/components/ui/toaster";
@@ -10,12 +10,19 @@ import AppSidebar from "./dashboard/AppSidebar";
 
 const CLERK_PUBLISHABLE_KEY = 'pk_live_Y2xlcmsuZXBpYy5kbSQ'
 
-function AppInner() {
+// Inner layout — rendered inside ClerkProvider
+function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const isDashboard = useMemo(() => location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/create"), [location]);
+  const isDashboard = useMemo(() =>
+    location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/create"),
+    [location]);
   const isAdmin = useMemo(() => location.pathname.startsWith("/admin"), [location]);
-  const isAuth = useMemo(() => ["/login", "/signup", "/request-password-reset", "/password-reset", "/email-verification"].some(p => location.pathname.startsWith(p)), [location]);
+  const isAuth = useMemo(() =>
+    ["/login", "/signup", "/request-password-reset", "/password-reset", "/email-verification"]
+      .some(p => location.pathname.startsWith(p)),
+    [location]);
 
   useEffect(() => {
     if (location.hash) {
@@ -26,20 +33,13 @@ function AppInner() {
 
   if (isDashboard) {
     return (
-      <>
-        <SignedIn>
-          <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden">
-            <AppSidebar />
-            <div className="flex-1 overflow-y-auto">
-              <Outlet />
-            </div>
-            <Toaster position="bottom-right" />
-          </div>
-        </SignedIn>
-        <SignedOut>
-          <RedirectToSignIn redirectUrl={location.pathname} />
-        </SignedOut>
-      </>
+      <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden">
+        <AppSidebar />
+        <div className="flex-1 overflow-y-auto">
+          <Outlet />
+        </div>
+        <Toaster position="bottom-right" />
+      </div>
     );
   }
 
@@ -66,16 +66,18 @@ function AppInner() {
   );
 }
 
+// ClerkProvider must wrap the entire app including the router outlet
+// We use window.location for navigation to avoid useNavigate-outside-router issues
 export default function App() {
-  const navigate = useNavigate()
-
   return (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
-      routerPush={(to: string) => navigate(to)}
-      routerReplace={(to: string) => navigate(to, { replace: true })}
+      routerPush={(to: string) => window.history.pushState({}, '', to)}
+      routerReplace={(to: string) => window.history.replaceState({}, '', to)}
+      afterSignInUrl="/dashboard"
+      afterSignUpUrl="/dashboard"
     >
-      <AppInner />
+      <AppLayout />
     </ClerkProvider>
   )
 }
