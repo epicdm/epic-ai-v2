@@ -5,8 +5,8 @@ export function Signup() {
   return (
     <AuthPageLayout>
       <SignUp
-        routing="hash"
-        afterSignUpUrl="/dashboard"
+        signInUrl="/login"
+        fallbackRedirectUrl="/dashboard"
         appearance={{
           variables: {
             colorPrimary: '#6366f1',
@@ -19,12 +19,13 @@ export function Signup() {
             fontFamily: 'system-ui, sans-serif',
           },
           elements: {
-            card: { backgroundColor: 'transparent', boxShadow: 'none', padding: 0 },
+            card: { backgroundColor: 'transparent', boxShadow: 'none', padding: 0, width: '100%' },
             rootBox: { width: '100%' },
             formButtonPrimary: { background: 'linear-gradient(135deg,#6366f1,#7c3aed)', border: 'none' },
             headerTitle: { color: '#ffffff' },
             headerSubtitle: { color: '#71717a' },
             socialButtonsBlockButton: { backgroundColor: '#ffffff', color: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)' },
+            socialButtonsBlockButtonRow: { gap: '8px' },
             formFieldLabel: { color: '#a1a1aa' },
             formFieldInput: { backgroundColor: '#1a1a28', borderColor: 'rgba(255,255,255,0.1)', color: '#ffffff' },
             footerActionText: { color: '#71717a' },
