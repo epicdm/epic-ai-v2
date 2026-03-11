@@ -1,0 +1,408 @@
+app EpicAI {
+  wasp: {
+    version: "^0.21.0"
+  },
+
+  title: "EPIC AI — Your AI, Your Rules",
+
+  head: [
+    "<link rel='icon' href='/favicon.ico' />",
+    "<meta name='description' content='Your AI receptionist, on WhatsApp. Handles calls, messages, reminders and more — 24/7.' />",
+    "<meta name='author' content='EPIC Communications Inc' />",
+    "<meta name='keywords' content='ai assistant, whatsapp ai, voice ai, business automation' />",
+    "<meta property='og:type' content='website' />",
+    "<meta property='og:title' content='EPIC AI — Your AI, Your Rules' />",
+    "<meta property='og:site_name' content='EPIC AI' />",
+    "<meta property='og:url' content='https://bff.epic.dm' />",
+    "<meta property='og:description' content='Your AI receptionist, on WhatsApp. Handles calls, messages, reminders and more — 24/7.' />",
+  ],
+
+  auth: {
+    userEntity: User,
+    methods: {
+      email: {
+        fromField: {
+          name: "EPIC AI",
+          email: "noreply@epic.dm"
+        },
+        emailVerification: {
+          clientRoute: EmailVerificationRoute,
+          getEmailContentFn: import { getVerificationEmailContent } from "@src/auth/email-and-pass/emails",
+        },
+        passwordReset: {
+          clientRoute: PasswordResetRoute,
+          getEmailContentFn: import { getPasswordResetEmailContent } from "@src/auth/email-and-pass/emails",
+        },
+        userSignupFields: import { getEmailUserFields } from "@src/auth/userSignupFields",
+      },
+      google: {
+        userSignupFields: import { getGoogleUserFields } from "@src/auth/userSignupFields",
+        configFn: import { getGoogleAuthConfig } from "@src/auth/userSignupFields",
+      },
+    },
+    onAuthFailedRedirectTo: "/login",
+    onAuthSucceededRedirectTo: "/dashboard",
+  },
+
+  db: {
+    seeds: [
+      import { seedMockUsers } from "@src/server/scripts/dbSeeds",
+    ]
+  },
+
+  emailSender: {
+    provider: SMTP,
+    defaultFrom: {
+      name: "EPIC AI",
+      email: "noreply@epic.dm"
+    },
+  },
+}
+
+// ─── Landing & Auth ──────────────────────────────────────────
+
+route LandingPageRoute { path: "/", to: LandingPage }
+page LandingPage {
+  component: import LandingPage from "@src/client/LandingPage"
+}
+
+route LoginRoute { path: "/login", to: LoginPage }
+page LoginPage {
+  component: import { LoginPage } from "@src/auth/LoginPage"
+}
+
+route SignupRoute { path: "/signup", to: SignupPage }
+page SignupPage {
+  component: import { SignupPage } from "@src/auth/SignupPage"
+}
+
+route RequestPasswordResetRoute { path: "/request-password-reset", to: RequestPasswordResetPage }
+page RequestPasswordResetPage {
+  component: import { RequestPasswordResetPage } from "@src/auth/email-and-pass/RequestPasswordResetPage"
+}
+
+route PasswordResetRoute { path: "/password-reset", to: PasswordResetPage }
+page PasswordResetPage {
+  component: import { PasswordResetPage } from "@src/auth/email-and-pass/PasswordResetPage"
+}
+
+route EmailVerificationRoute { path: "/email-verification", to: EmailVerificationPage }
+page EmailVerificationPage {
+  component: import { EmailVerificationPage } from "@src/auth/email-and-pass/EmailVerificationPage"
+}
+
+// ─── Dashboard ───────────────────────────────────────────────
+
+route DashboardRoute { path: "/dashboard", to: DashboardPage }
+page DashboardPage {
+  authRequired: true,
+  component: import DashboardPage from "@src/client/dashboard/DashboardPage"
+}
+
+route AgentsRoute { path: "/dashboard/agents", to: AgentsPage }
+page AgentsPage {
+  authRequired: true,
+  component: import AgentsPage from "@src/client/dashboard/AgentsPage"
+}
+
+route AgentDetailRoute { path: "/dashboard/agents/:agentId", to: AgentDetailPage }
+page AgentDetailPage {
+  authRequired: true,
+  component: import AgentDetailPage from "@src/client/dashboard/AgentDetailPage"
+}
+
+route ConversationsRoute { path: "/dashboard/conversations", to: ConversationsPage }
+page ConversationsPage {
+  authRequired: true,
+  component: import ConversationsPage from "@src/client/dashboard/ConversationsPage"
+}
+
+route CallsRoute { path: "/dashboard/calls", to: CallsPage }
+page CallsPage {
+  authRequired: true,
+  component: import CallsPage from "@src/client/dashboard/CallsPage"
+}
+
+route BroadcastsRoute { path: "/dashboard/broadcasts", to: BroadcastsPage }
+page BroadcastsPage {
+  authRequired: true,
+  component: import BroadcastsPage from "@src/client/dashboard/BroadcastsPage"
+}
+
+route ContactsRoute { path: "/dashboard/contacts", to: ContactsPage }
+page ContactsPage {
+  authRequired: true,
+  component: import ContactsPage from "@src/client/dashboard/ContactsPage"
+}
+
+route BillingRoute { path: "/dashboard/billing", to: BillingPage }
+page BillingPage {
+  authRequired: true,
+  component: import BillingPage from "@src/client/dashboard/BillingPage"
+}
+
+route SettingsRoute { path: "/dashboard/settings", to: SettingsPage }
+page SettingsPage {
+  authRequired: true,
+  component: import SettingsPage from "@src/client/dashboard/SettingsPage"
+}
+
+route CreateAgentRoute { path: "/create", to: CreateAgentPage }
+page CreateAgentPage {
+  authRequired: true,
+  component: import CreateAgentPage from "@src/client/onboarding/CreateAgentPage"
+}
+
+route PricingRoute { path: "/pricing", to: PricingPage }
+page PricingPage {
+  component: import PricingPage from "@src/client/PricingPage"
+}
+
+// ─── Admin ───────────────────────────────────────────────────
+
+route AdminRoute { path: "/admin", to: AdminDashboardPage }
+page AdminDashboardPage {
+  authRequired: true,
+  component: import { AnalyticsDashboardPage } from "@src/admin/dashboards/AnalyticsDashboardPage"
+}
+
+route AdminUsersRoute { path: "/admin/users", to: AdminUsersPage }
+page AdminUsersPage {
+  authRequired: true,
+  component: import { AdminUsersPage } from "@src/admin/dashboards/AdminUsersPage"
+}
+
+route AdminSettingsRoute { path: "/admin/settings", to: AdminSettingsPage }
+page AdminSettingsPage {
+  authRequired: true,
+  component: import { AdminSettingsPage } from "@src/admin/elements/AdminSettingsPage"
+}
+
+route NotFoundRoute { path: "*", to: NotFoundPage }
+page NotFoundPage {
+  component: import { NotFoundPage } from "@src/client/components/NotFoundPage"
+}
+
+// ─── Queries ─────────────────────────────────────────────────
+
+query getAgents {
+  fn: import { getAgents } from "@src/server/queries",
+  entities: [Agent]
+}
+
+query getAgent {
+  fn: import { getAgent } from "@src/server/queries",
+  entities: [Agent]
+}
+
+query getConversations {
+  fn: import { getConversations } from "@src/server/queries",
+  entities: [Conversation, Message, Contact, Agent]
+}
+
+query getContacts {
+  fn: import { getContacts } from "@src/server/queries",
+  entities: [Contact]
+}
+
+query getReminders {
+  fn: import { getReminders } from "@src/server/queries",
+  entities: [Reminder]
+}
+
+query getBills {
+  fn: import { getBills } from "@src/server/queries",
+  entities: [Bill]
+}
+
+query getTodos {
+  fn: import { getTodos } from "@src/server/queries",
+  entities: [Todo]
+}
+
+query getBroadcasts {
+  fn: import { getBroadcasts } from "@src/server/queries",
+  entities: [Broadcast, BroadcastRecipient]
+}
+
+query getPaginatedUsers {
+  fn: import { getPaginatedUsers } from "@src/server/queries",
+  entities: [User]
+}
+
+query getDailyStats {
+  fn: import { getDailyStats } from "@src/server/queries",
+  entities: [User]
+}
+
+// ─── Actions ─────────────────────────────────────────────────
+
+action createAgent {
+  fn: import { createAgent } from "@src/server/actions",
+  entities: [Agent, User]
+}
+
+action updateAgent {
+  fn: import { updateAgent } from "@src/server/actions",
+  entities: [Agent]
+}
+
+action deleteAgent {
+  fn: import { deleteAgent } from "@src/server/actions",
+  entities: [Agent]
+}
+
+action createReminder {
+  fn: import { createReminder } from "@src/server/actions",
+  entities: [Reminder]
+}
+
+action updateReminder {
+  fn: import { updateReminder } from "@src/server/actions",
+  entities: [Reminder]
+}
+
+action deleteReminder {
+  fn: import { deleteReminder } from "@src/server/actions",
+  entities: [Reminder]
+}
+
+action createBill {
+  fn: import { createBill } from "@src/server/actions",
+  entities: [Bill]
+}
+
+action updateBill {
+  fn: import { updateBill } from "@src/server/actions",
+  entities: [Bill]
+}
+
+action deleteBill {
+  fn: import { deleteBill } from "@src/server/actions",
+  entities: [Bill]
+}
+
+action createTodo {
+  fn: import { createTodo } from "@src/server/actions",
+  entities: [Todo]
+}
+
+action updateTodo {
+  fn: import { updateTodo } from "@src/server/actions",
+  entities: [Todo]
+}
+
+action deleteTodo {
+  fn: import { deleteTodo } from "@src/server/actions",
+  entities: [Todo]
+}
+
+action createBroadcast {
+  fn: import { createBroadcast } from "@src/server/actions",
+  entities: [Broadcast, BroadcastRecipient]
+}
+
+action sendBroadcast {
+  fn: import { sendBroadcast } from "@src/server/actions",
+  entities: [Broadcast, BroadcastRecipient, Agent]
+}
+
+action deleteBroadcast {
+  fn: import { deleteBroadcast } from "@src/server/actions",
+  entities: [Broadcast]
+}
+
+action createContact {
+  fn: import { createContact } from "@src/server/actions",
+  entities: [Contact]
+}
+
+action importContacts {
+  fn: import { importContacts } from "@src/server/actions",
+  entities: [Contact]
+}
+
+action updateIsUserAdminById {
+  fn: import { updateIsUserAdminById } from "@src/server/actions",
+  entities: [User]
+}
+
+// ─── API Endpoints (webhooks + LiveKit + calls) ───────────────
+
+api whatsappWebhookVerify {
+  fn: import { whatsappWebhookVerify } from "@src/server/webhooks/whatsapp",
+  httpRoute: (GET, "/api/whatsapp/webhook"),
+  auth: false
+}
+
+api whatsappWebhook {
+  fn: import { whatsappWebhook } from "@src/server/webhooks/whatsapp",
+  httpRoute: (POST, "/api/whatsapp/webhook"),
+  auth: false
+}
+
+api fiservWebhook {
+  fn: import { fiservWebhook } from "@src/server/payment/fiservWebhook",
+  httpRoute: (POST, "/api/billing/webhook"),
+  auth: false
+}
+
+api fiservCheckout {
+  fn: import { fiservCheckout } from "@src/server/payment/fiservCheckout",
+  httpRoute: (POST, "/api/billing/checkout"),
+  auth: true
+}
+
+api getUserPlan {
+  fn: import { getUserPlan } from "@src/server/payment/fiservCheckout",
+  httpRoute: (GET, "/api/billing/plan"),
+  auth: true
+}
+
+api getLivekitToken {
+  fn: import { getLivekitToken } from "@src/server/livekit",
+  httpRoute: (GET, "/api/livekit/token"),
+  auth: true
+}
+
+api callsOutbound {
+  fn: import { callsOutbound } from "@src/server/calls",
+  httpRoute: (POST, "/api/calls/outbound"),
+  auth: true
+}
+
+api callsIncomingGet {
+  fn: import { callsIncomingGet } from "@src/server/calls",
+  httpRoute: (GET, "/api/calls/incoming"),
+  auth: true
+}
+
+api callsIncomingDelete {
+  fn: import { callsIncomingDelete } from "@src/server/calls",
+  httpRoute: (DELETE, "/api/calls/incoming"),
+  auth: true
+}
+
+api voiceContext {
+  fn: import { voiceContext } from "@src/server/voice",
+  httpRoute: (GET, "/api/voice/context"),
+  auth: false
+}
+
+api pushSubscribe {
+  fn: import { pushSubscribePost } from "@src/server/push",
+  httpRoute: (POST, "/api/push/subscribe"),
+  auth: true
+}
+
+api pushSubscribeDelete {
+  fn: import { pushSubscribeDelete } from "@src/server/push",
+  httpRoute: (DELETE, "/api/push/subscribe"),
+  auth: true
+}
+
+api pushNotify {
+  fn: import { pushNotify } from "@src/server/push",
+  httpRoute: (POST, "/api/push/notify"),
+  auth: false
+}

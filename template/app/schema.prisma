@@ -1,0 +1,241 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Wasp required + our fields ──────────────────────────────
+
+model User {
+  id                        String    @id @default(uuid())
+  createdAt                 DateTime  @default(now())
+  email                     String?   @unique
+  username                  String?   @unique
+  isAdmin                   Boolean   @default(false)
+
+  // Payment
+  paymentProcessorUserId    String?   @unique
+  subscriptionStatus        String?   // 'active', 'cancel_at_period_end', 'past_due', 'deleted'
+  subscriptionPlan          String?   @default("free") // 'free', 'pro', 'business'
+  pendingPlan               String?
+  pendingPlanSince          DateTime?
+  datePaid                  DateTime?
+  lastBillingDate           DateTime?
+  credits                   Int       @default(0)
+
+  // BFF fields
+  whatsappPhone             String?
+
+  // Relations
+  agents                    Agent[]
+  contacts                  Contact[]
+  conversations             Conversation[]
+  reminders                 Reminder[]
+  bills                     Bill[]
+  todos                     Todo[]
+  broadcasts                Broadcast[]
+  pushSubscriptions         PushSubscription[]
+  contactFormMessages       ContactFormMessage[]
+}
+
+model Agent {
+  id             String   @id @default(uuid())
+  userId         String
+  name           String
+  template       String?
+  purpose        String?
+  tone           String?
+  tools          String   @default("[]")
+  approvalMode   String   @default("confirm")
+  config         Json?
+  guardrails     Json?
+  soul           String?
+  status         String   @default("draft")
+  whatsappStatus String   @default("not_connected")
+  whatsappNumber String?
+  phoneNumber    String?
+  phoneStatus    String   @default("pending")
+  didNumber      String?
+  didSipUser     String?
+  didSipPass     String?
+  didSipServer   String?
+  inboundRouting String   @default("whatsapp")
+  isActive       Boolean  @default(true)
+  activationCode String?  @unique
+  whatsappPhone  String?
+  activatedAt    DateTime?
+  deployedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations    Conversation[]
+  activities       AgentActivity[]
+  reminders        Reminder[]
+  bills            Bill[]
+  todos            Todo[]
+  whatsAppMessages WhatsAppMessage[]
+  broadcasts       Broadcast[]
+}
+
+model Reminder {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  text      String
+  datetime  DateTime
+  recurring String?
+  sent      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model Bill {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  name      String
+  amount    Float
+  dueDate   DateTime
+  recurring String?
+  paid      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model Todo {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  text      String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model AgentActivity {
+  id        String   @id @default(uuid())
+  agentId   String
+  type      String
+  summary   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, createdAt])
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  phone     String?
+  email     String?
+  notes     String?
+  tags      String   @default("[]")
+  createdAt DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  contactId String
+  channel   String   @default("whatsapp")
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent    Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  contact  Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+model Message {
+  id             String    @id @default(uuid())
+  conversationId String
+  direction      String
+  text           String
+  status         String    @default("sent")
+  approvedAt     DateTime?
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model WhatsAppMessage {
+  id        String   @id @default(uuid())
+  agentId   String
+  phone     String
+  role      String
+  content   String
+  timestamp DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id])
+
+  @@index([agentId, phone, timestamp])
+}
+
+model Broadcast {
+  id             String    @id @default(uuid())
+  userId         String
+  agentId        String
+  name           String
+  message        String
+  status         String    @default("draft")
+  recipientCount Int       @default(0)
+  sentCount      Int       @default(0)
+  failedCount    Int       @default(0)
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent      Agent                @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  recipients BroadcastRecipient[]
+}
+
+model BroadcastRecipient {
+  id          String    @id @default(uuid())
+  broadcastId String
+  phone       String
+  name        String?
+  status      String    @default("pending")
+  sentAt      DateTime?
+  error       String?
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Wasp built-in models ─────────────────────────────────────
+
+model ContactFormMessage {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  content     String
+  isRead      Boolean  @default(false)
+  repliedAt   DateTime?
+}
