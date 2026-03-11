@@ -12,6 +12,9 @@ model User {
   id                String    @id @default(cuid())
   clerkId           String    @unique
   email             String    @unique
+  username          String?   // Open SaaS compat — not used with Clerk
+  subscriptionStatus String?  // Open SaaS compat — mapped to plan field
+  subscriptionPlan  String?   // Open SaaS compat — not used
   plan              String    @default("free")   // "free" | "pro" | "business"
   notificationPrefs Json      @default("{\"summaryInterval\":\"2hr\",\"quietStart\":\"22:00\",\"quietEnd\":\"08:00\",\"instantAlerts\":[\"hot_lead\",\"negative_sentiment\",\"payment_moment\",\"call_request\"]}")
   lastSummaryAt     DateTime?
