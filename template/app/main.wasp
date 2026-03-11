@@ -17,8 +17,26 @@ app EpicAI {
     "<meta property='og:description' content='Your AI receptionist, on WhatsApp. Handles calls, messages, reminders and more — 24/7.' />",
   ],
 
-  // Auth handled by Clerk — NOT Wasp built-in auth
-  // ClerkProvider injected in virtual index.tsx
+  auth: {
+    userEntity: User,
+    methods: {
+      email: {
+        fromField: {
+          name: "EPIC AI",
+          email: "noreply@epic.dm"
+        },
+        emailVerification: {
+          clientRoute: EmailVerificationRoute,
+        },
+        passwordReset: {
+          clientRoute: PasswordResetRoute,
+        },
+        userSignupFields: import { getEmailUserFields } from "@src/auth/userSignupFields",
+      },
+    },
+    onAuthFailedRedirectTo: "/login",
+    onAuthSucceededRedirectTo: "/dashboard",
+  },
 
   db: {
     seeds: [
@@ -26,7 +44,13 @@ app EpicAI {
     ]
   },
 
-  // Email sending via SMTP (for future use)
+  emailSender: {
+    provider: SMTP,
+    defaultFrom: {
+      name: "EPIC AI",
+      email: "noreply@epic.dm"
+    },
+  },
 
 }
 
@@ -47,7 +71,20 @@ page SignupPage {
   component: import { SignupPage } from "@src/auth/SignupPage"
 }
 
-// Clerk handles password reset and email verification — no Wasp pages needed
+route RequestPasswordResetRoute { path: "/request-password-reset", to: RequestPasswordResetPage }
+page RequestPasswordResetPage {
+  component: import { RequestPasswordResetPage } from "@src/auth/email-and-pass/RequestPasswordResetPage"
+}
+
+route PasswordResetRoute { path: "/password-reset", to: PasswordResetPage }
+page PasswordResetPage {
+  component: import { PasswordResetPage } from "@src/auth/email-and-pass/PasswordResetPage"
+}
+
+route EmailVerificationRoute { path: "/email-verification", to: EmailVerificationPage }
+page EmailVerificationPage {
+  component: import { EmailVerificationPage } from "@src/auth/email-and-pass/EmailVerificationPage"
+}
 
 
 // ─── Dashboard ───────────────────────────────────────────────

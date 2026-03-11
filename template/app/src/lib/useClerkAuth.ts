@@ -1,19 +1,14 @@
 /**
- * Clerk auth shim — drop-in replacement for Wasp's useAuth()
- * Returns same shape: { data: user, isLoading, isError }
+ * Clerk auth shim — drop-in replacement for Wasp's useAuth() + logout
  */
-import { useUser } from '@clerk/clerk-react'
+import { useUser, useClerk } from '@clerk/clerk-react'
+import { useNavigate } from 'react-router-dom'
 
 export function useAuth() {
   const { user, isLoaded } = useUser()
 
-  if (!isLoaded) {
-    return { data: null, isLoading: true, isError: false }
-  }
-
-  if (!user) {
-    return { data: null, isLoading: false, isError: false }
-  }
+  if (!isLoaded) return { data: null, isLoading: true, isError: false }
+  if (!user) return { data: null, isLoading: false, isError: false }
 
   return {
     data: {
@@ -26,4 +21,9 @@ export function useAuth() {
     isLoading: false,
     isError: false,
   }
+}
+
+export function logout() {
+  // Clerk sign out — callable without hooks (components use useClerk().signOut())
+  window.location.href = '/login'
 }

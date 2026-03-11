@@ -186,7 +186,7 @@ function BuyMoreButton({
 
   return (
     <WaspRouterLink
-      to={routes.PricingPageRoute.to}
+      to={routes.PricingRoute.to}
       className="text-primary hover:text-primary/80 text-sm font-medium transition-colors duration-200"
     >
       <Button variant="link">Buy More Credits</Button>
