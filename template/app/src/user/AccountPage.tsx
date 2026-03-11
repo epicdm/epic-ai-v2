@@ -1,4 +1,4 @@
-import { getCustomerPortalUrl, useQuery } from "wasp/client/operations";
+import { useQuery } from "wasp/client/operations";
 import { Link as WaspRouterLink, routes } from "wasp/client/router";
 import type { User } from "wasp/entities";
 import { Button } from "../client/components/ui/button";
@@ -158,20 +158,8 @@ function prettyPrintEndOfBillingPeriod(date: Date) {
 }
 
 function CustomerPortalButton() {
-  const { data: customerPortalUrl, isLoading: isCustomerPortalUrlLoading } =
-    useQuery(getCustomerPortalUrl);
-
-  if (!customerPortalUrl) {
-    return null;
-  }
-
-  return (
-    <a href={customerPortalUrl} target="_blank" rel="noopener noreferrer">
-      <Button disabled={isCustomerPortalUrlLoading} variant="link">
-        Manage Payment Details
-      </Button>
-    </a>
-  );
+  // Fiserv billing portal — not yet implemented
+  return null;
 }
 
 function BuyMoreButton({

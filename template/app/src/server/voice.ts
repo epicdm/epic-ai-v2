@@ -16,8 +16,6 @@ export const voiceContext = async (req: ExpressHttpRequest, res: ExpressHttpResp
         OR: [
           { didNumber: phone_number as string },
           { didNumber: `+${normalized}` },
-          { phoneNumber: normalized },
-          { phoneNumber: `+${normalized}` },
         ],
       },
     })
@@ -32,9 +30,13 @@ export const voiceContext = async (req: ExpressHttpRequest, res: ExpressHttpResp
       })
     }
 
+    const config = agent.config as any
+    const soul = config?.soul
+    const purpose = config?.purpose
+    const tone = config?.tone
     return res.json({
       agentName: agent.name,
-      prompt: agent.soul || agent.purpose || `You are ${agent.name}, a helpful AI assistant. ${agent.tone ? `Your tone is ${agent.tone}.` : ''}`,
+      prompt: soul || purpose || `You are ${agent.name}, a helpful AI assistant. ${tone ? `Your tone is ${tone}.` : ''}`,
       voice: 'alloy',
       language: 'en-US',
       agentId: agent.id,

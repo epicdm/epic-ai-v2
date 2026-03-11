@@ -2,7 +2,7 @@
  * WhatsApp Webhook Handler — V2
  * Implements full 8-step routing decision tree from BFF-SPEC.md Section 7.1
  */
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 import crypto from 'crypto'
 
@@ -14,7 +14,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
 
 // ─── Webhook verification (GET) ───────────────────────────────
 
-export const whatsappWebhookVerify = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const whatsappWebhookVerify = async (req: Request, res: Response) => {
   const mode = req.query['hub.mode']
   const token = req.query['hub.verify_token']
   const challenge = req.query['hub.challenge']
@@ -238,7 +238,7 @@ async function buildSummaryMessage(agent: any): Promise<string> {
 
 // ─── Main webhook handler (POST) ─────────────────────────────
 
-export const whatsappWebhook = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const whatsappWebhook = async (req: Request, res: Response) => {
   // Always ack immediately — Meta requires 200 within 5s
   res.status(200).send('OK')
 
@@ -416,7 +416,8 @@ export const whatsappWebhook = async (req: ExpressHttpRequest, res: ExpressHttpR
 
     // Agent paused? Send away message
     if (routedAgent.status === 'paused') {
-      const awayMsg = routedAgent.config?.awayMessage || "Hi! We're currently unavailable but will get back to you as soon as possible. 🙏"
+      const config = routedAgent.config as any
+      const awayMsg = config?.awayMessage || "Hi! We're currently unavailable but will get back to you as soon as possible. 🙏"
       await sendWAMessage(from, awayMsg)
       return
     }
@@ -549,7 +550,7 @@ async function processMessage(agent: any, from: string, messageText: string, con
       conversationId,
       type: escalationFlag ? 'escalation' : 'intent',
       summary: escalationFlag ? `${escalationFlag}: ${messageText.slice(0, 80)}` : `Replied to customer`,
-      metadata: escalationFlag ? { flag: escalationFlag } : null,
+      metadata: escalationFlag ? { flag: escalationFlag } : {},
     },
   })
 
