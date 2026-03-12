@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";

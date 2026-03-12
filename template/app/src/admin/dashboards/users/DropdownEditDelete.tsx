@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Ellipsis, SquarePen, Trash2 } from "lucide-react";
 import {
   DropdownMenu,

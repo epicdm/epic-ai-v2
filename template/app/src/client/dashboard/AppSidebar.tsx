@@ -1,206 +1,221 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router";
-import { useAuth } from "../../lib/useClerkAuth";
-import { useClerk } from "@clerk/clerk-react";
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router'
+import { useClerk } from '@clerk/clerk-react'
+import { useQuery } from 'wasp/client/operations'
+import { getWorkspaceProfile } from 'wasp/client/operations'
 import {
-  LayoutDashboard, Bot, MessageCircle, Phone, Radio,
-  Users, BookOpen, Plug, CreditCard, Settings,
-  ChevronLeft, ChevronRight, Sparkles, LogOut, X,
-} from "lucide-react";
-
-const NAV = [
-  {
-    items: [{ href: "/dashboard", label: "Home", icon: LayoutDashboard, exact: true }],
-  },
-  {
-    label: "WORKSPACE",
-    items: [
-      { href: "/dashboard/agents", label: "Agents", icon: Bot , exact: false },
-      { href: "/dashboard/conversations", label: "Conversations", icon: MessageCircle , exact: false },
-      { href: "/dashboard/calls", label: "Calls", icon: Phone , exact: false },
-      { href: "/dashboard/broadcasts", label: "Broadcasts", icon: Radio , exact: false },
-    ],
-  },
-  {
-    label: "MANAGE",
-    items: [
-      { href: "/dashboard/contacts", label: "Contacts", icon: Users , exact: false },
-    ],
-  },
-  {
-    label: "ACCOUNT",
-    items: [
-      { href: "/dashboard/billing", label: "Billing", icon: CreditCard , exact: false },
-      { href: "/dashboard/settings", label: "Settings", icon: Settings , exact: false },
-    ],
-  },
-];
+  Bot,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  Crown,
+  LayoutDashboard,
+  LogOut,
+  Megaphone,
+  MessageCircle,
+  Phone,
+  Settings,
+  Sparkles,
+  Users,
+  Wrench,
+  X,
+} from 'lucide-react'
 
 const PLAN_BADGE: Record<string, string> = {
-  free: "bg-zinc-700 text-zinc-300",
-  pro: "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30",
-  business: "bg-violet-500/20 text-violet-300 border border-violet-500/30",
-};
+  free: 'bg-zinc-700 text-zinc-300',
+  pro: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
+  business: 'bg-violet-500/20 text-violet-300 border border-violet-500/30',
+}
 
 export default function AppSidebar() {
-  const { data: user } = useAuth()
-  const { signOut } = useClerk();
-  const location = useLocation();
+  const { signOut } = useClerk()
+  const location = useLocation()
+  const { data: profile } = useQuery(getWorkspaceProfile)
+
   const [collapsed, setCollapsed] = useState(() => {
-    try { return localStorage.getItem("sidebar-collapsed") === "true"; } catch { return false; }
-  });
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
+    try {
+      return localStorage.getItem('sidebar-collapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const sidebarRef = useRef<HTMLDivElement>(null)
 
-  // Persist collapse state
   useEffect(() => {
-    try { localStorage.setItem("sidebar-collapsed", String(collapsed)); } catch {}
-  }, [collapsed]);
+    try {
+      localStorage.setItem('sidebar-collapsed', String(collapsed))
+    } catch {}
+  }, [collapsed])
 
-  // Close mobile on route change
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
-
-  // Click outside to close mobile
   useEffect(() => {
-    if (!mobileOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) setMobileOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [mobileOpen]);
+    setMobileOpen(false)
+  }, [location.pathname])
 
-  // ESC to close mobile
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileOpen(false); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, []);
+    if (!mobileOpen) return
+    const handler = (event: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setMobileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [mobileOpen])
 
-  const plan = (user as any)?.subscriptionPlan || "free";
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
-  const isActive = (href: string, exact = false) => {
-    if (exact) return location.pathname === href;
-    return location.pathname.startsWith(href);
-  };
+  const nav = [
+    {
+      items: [{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true }],
+    },
+    {
+      label: 'WORKSPACE',
+      items: [
+        { href: '/dashboard/agents', label: 'Agents', icon: Bot },
+        { href: '/dashboard/conversations', label: 'Conversations', icon: MessageCircle },
+        { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
+        { href: '/dashboard/campaigns', label: 'Campaigns', icon: Megaphone },
+        { href: '/dashboard/calls', label: 'Calls', icon: Phone },
+      ],
+    },
+    {
+      label: 'ACCOUNT',
+      items: [
+        { href: '/upgrade', label: 'Upgrade', icon: Crown },
+        { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
+        { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+      ],
+    },
+  ]
+
+  if (profile?.isAdmin) {
+    nav.push({
+      label: 'INTERNAL',
+      items: [{ href: '/admin', label: 'Admin', icon: Wrench }],
+    })
+  }
+
+  const plan = profile?.plan || 'free'
+  const email = profile?.email || 'user@epic.dm'
+
+  const isActive = (href: string, exact?: boolean) => exact ? location.pathname === href : location.pathname.startsWith(href)
 
   const sidebarContent = (
-    <div className={`${collapsed && !mobileOpen ? "w-16" : "w-60"} bg-zinc-950 border-r border-zinc-800/60 flex flex-col h-full transition-all duration-300 ease-in-out`}>
-      {/* Logo */}
-      <div className={`h-16 flex items-center ${collapsed && !mobileOpen ? "justify-center px-0" : "px-5"} border-b border-zinc-800/60 shrink-0`}>
+    <div className={`${collapsed && !mobileOpen ? 'w-16' : 'w-64'} flex h-full flex-col border-r border-zinc-800/60 bg-zinc-950 transition-all duration-300`}>
+      <div className={`flex h-16 items-center border-b border-zinc-800/60 ${collapsed && !mobileOpen ? 'justify-center px-0' : 'px-5'}`}>
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
+            <Sparkles className="h-4 w-4 text-white" />
           </div>
           {(!collapsed || mobileOpen) && (
-            <span className="font-bold text-sm text-zinc-100 tracking-tight">
-              EPIC <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">AI</span>
+            <span className="text-sm font-bold tracking-tight text-zinc-100">
+              EPIC <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">AI</span>
             </span>
           )}
         </Link>
         {mobileOpen && (
           <button onClick={() => setMobileOpen(false)} className="ml-auto p-1 text-zinc-500 hover:text-zinc-300">
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-0.5">
-        {NAV.map((section, si) => (
-          <div key={si} className={si > 0 ? "mt-4" : ""}>
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+        {nav.map((section, index) => (
+          <div key={section.label || index} className={index > 0 ? 'mt-4' : ''}>
             {(!collapsed || mobileOpen) && section.label && (
-              <p className="px-3 py-1.5 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                {section.label}
-              </p>
+              <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">{section.label}</p>
             )}
             {section.items.map((item) => {
-              const active = isActive(item.href, 'exact' in item && item.exact);
-              const Icon = item.icon;
+              const Icon = item.icon
+              const active = isActive(item.href, item.exact)
               return (
                 <Link
                   key={item.href}
                   to={item.href}
                   title={collapsed && !mobileOpen ? item.label : undefined}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${
-                    active
-                      ? "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60"
-                  } ${collapsed && !mobileOpen ? "justify-center" : ""}`}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${active ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100'} ${collapsed && !mobileOpen ? 'justify-center' : ''}`}
                 >
-                  <Icon className="w-[17px] h-[17px] shrink-0" />
+                  <Icon className="h-[17px] w-[17px] shrink-0" />
                   {(!collapsed || mobileOpen) && <span>{item.label}</span>}
                 </Link>
-              );
+              )
             })}
           </div>
         ))}
       </nav>
 
-      {/* Collapse toggle (desktop only) */}
       {!mobileOpen && (
         <button
-          onClick={() => setCollapsed(c => !c)}
-          className="mx-2 mb-2 flex items-center justify-center h-8 rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800/60 transition-colors"
+          onClick={() => setCollapsed((current) => !current)}
+          className="mx-2 mb-2 flex h-8 items-center justify-center rounded-lg text-zinc-600 transition hover:bg-zinc-800/60 hover:text-zinc-300"
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
       )}
 
-      {/* User section */}
-      <div className={`border-t border-zinc-800/60 p-3 ${collapsed && !mobileOpen ? "flex justify-center" : ""}`}>
+      <div className={`border-t border-zinc-800/60 p-3 ${collapsed && !mobileOpen ? 'flex justify-center' : ''}`}>
         {collapsed && !mobileOpen ? (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold">
-            {(user?.email || "U")[0].toUpperCase()}
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold text-white">
+            {(email || 'U')[0].toUpperCase()}
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {(user?.email || "U")[0].toUpperCase()}
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold text-white">
+              {(email || 'U')[0].toUpperCase()}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-zinc-200 truncate">
-                {user?.email?.split("@")[0] || "User"}
-              </p>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold uppercase ${PLAN_BADGE[plan] || PLAN_BADGE.free}`}>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-zinc-200">{email.split('@')[0]}</p>
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase ${PLAN_BADGE[plan] || PLAN_BADGE.free}`}>
                 {plan}
               </span>
             </div>
-            <button onClick={async () => { await signOut(); window.location.href = "/"; }} style={{cursor:"pointer",background:"none",border:"none",padding:0}} className="text-zinc-600 hover:text-red-400 transition-colors">
-              <LogOut className="w-4 h-4" />
+            <button
+              onClick={async () => {
+                await signOut()
+                window.location.href = '/'
+              }}
+              className="text-zinc-600 transition hover:text-red-400"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         )}
       </div>
     </div>
-  );
+  )
 
   return (
     <>
-      {/* Mobile hamburger */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 w-9 h-9 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 hover:text-zinc-200"
+        className="fixed left-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 lg:hidden"
         onClick={() => setMobileOpen(true)}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
 
-      {/* Desktop sidebar */}
-      <div ref={sidebarRef} className="hidden lg:flex h-screen">
+      <div ref={sidebarRef} className="hidden h-screen lg:flex">
         {sidebarContent}
       </div>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <>
-          <div className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={() => setMobileOpen(false)} />
-          <div ref={sidebarRef} className="lg:hidden fixed inset-y-0 left-0 z-50 flex">
+          <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMobileOpen(false)} />
+          <div ref={sidebarRef} className="fixed inset-y-0 left-0 z-50 flex lg:hidden">
             {sidebarContent}
           </div>
         </>
       )}
     </>
-  );
+  )
 }

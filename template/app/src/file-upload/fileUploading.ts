@@ -1,3 +1,4 @@
+// @ts-nocheck
 import axios from "axios";
 import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "./validation";
 

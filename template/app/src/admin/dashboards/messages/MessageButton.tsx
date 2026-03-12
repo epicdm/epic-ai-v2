@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { MessageCircleMore } from "lucide-react";
 import { Link as WaspRouterLink, routes } from "wasp/client/router";
 

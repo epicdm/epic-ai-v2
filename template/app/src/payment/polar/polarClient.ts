@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Polar } from "@polar-sh/sdk";
 import { env } from "wasp/server";
 

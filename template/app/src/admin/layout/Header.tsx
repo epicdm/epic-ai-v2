@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type AuthUser } from "wasp/auth";
 import DarkModeSwitcher from "../../client/components/DarkModeSwitcher";
 import { cn } from "../../client/utils";

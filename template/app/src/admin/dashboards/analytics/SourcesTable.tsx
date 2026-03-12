@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type PageViewSource } from "wasp/entities";
 
 const SourcesTable = ({

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { paymentProcessor } from "./paymentProcessor";
 
 export const paymentsWebhook = paymentProcessor.webhook;

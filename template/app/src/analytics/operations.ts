@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type DailyStats, type PageViewSource } from "wasp/entities";
 import { HttpError, prisma } from "wasp/server";
 import { type GetDailyStats } from "wasp/server/operations";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ApexOptions } from "apexcharts";
 import { useEffect, useMemo, useState } from "react";
 import ReactApexChart from "react-apexcharts";

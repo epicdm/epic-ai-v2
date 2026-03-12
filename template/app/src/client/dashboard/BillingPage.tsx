@@ -1,166 +1,145 @@
-import { useState } from "react";
-import { useAuth } from "../../lib/useClerkAuth";
-import { Check, Zap, Crown, Sparkles, ExternalLink } from "lucide-react";
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { useQuery } from 'wasp/client/operations'
+import { getWorkspaceProfile } from 'wasp/client/operations'
+import { Check, Crown, Sparkles, Zap } from 'lucide-react'
 
 const PLANS = [
   {
-    id: "free",
-    name: "Free",
-    price: 0,
+    id: 'free',
+    name: 'Free',
+    price: '$0',
     icon: Sparkles,
-    color: "zinc",
-    features: [
-      "1 AI Agent",
-      "50 messages/day",
-      "Talk to Jenny (free)",
-      "WhatsApp conversations",
-      "Basic templates",
-    ],
-    missing: ["PSTN phone number", "Outbound calls", "Broadcasts", "CSV import"],
+    tone: 'zinc',
+    features: ['1 agent', '50 messages/day', 'Dashboard + onboarding', 'Business profile only'],
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: 29,
+    id: 'pro',
+    name: 'Pro',
+    price: '$29',
     icon: Zap,
-    color: "indigo",
-    popular: true,
-    features: [
-      "3 AI Agents",
-      "Unlimited messages",
-      "DID phone number included",
-      "Inbound + outbound PSTN calls",
-      "Broadcasts (up to 500)",
-      "CSV contact import",
-      "Talk to Jenny (free)",
-      "WhatsApp conversations",
-      "Priority support",
-    ],
-    missing: [],
+    tone: 'indigo',
+    features: ['3 agents', 'Unlimited daily messages', 'Whisper / takeover', 'Knowledge base', '3 active campaigns', '500 broadcasts/mo'],
   },
   {
-    id: "business",
-    name: "Business",
-    price: 99,
+    id: 'business',
+    name: 'Business',
+    price: '$99',
     icon: Crown,
-    color: "violet",
-    features: [
-      "Unlimited AI Agents",
-      "Unlimited messages",
-      "Multiple DID numbers",
-      "Unlimited broadcasts",
-      "API access",
-      "Custom AI personality",
-      "Dedicated support",
-      "SLA guarantee",
-    ],
-    missing: [],
+    tone: 'violet',
+    features: ['Unlimited agents', 'Dedicated number', 'Unlimited campaigns', 'Team access', 'API / white-label options'],
   },
-];
+]
 
-const ACCENT: Record<string, { border: string; badge: string; btn: string; icon: string }> = {
-  zinc: { border: "border-zinc-700", badge: "", btn: "bg-zinc-700 hover:bg-zinc-600 text-zinc-200", icon: "text-zinc-400" },
-  indigo: { border: "border-indigo-500/40", badge: "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30", btn: "bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white shadow-lg shadow-indigo-500/20", icon: "text-indigo-400" },
-  violet: { border: "border-violet-500/40", badge: "bg-violet-500/20 text-violet-300 border border-violet-500/30", btn: "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-violet-500/20", icon: "text-violet-400" },
-};
+const TONES: Record<string, { card: string; button: string; icon: string }> = {
+  zinc: {
+    card: 'border-zinc-800',
+    button: 'bg-zinc-800 text-zinc-200',
+    icon: 'text-zinc-300',
+  },
+  indigo: {
+    card: 'border-indigo-500/30',
+    button: 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/20',
+    icon: 'text-indigo-300',
+  },
+  violet: {
+    card: 'border-violet-500/30',
+    button: 'bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white shadow-lg shadow-violet-500/20',
+    icon: 'text-violet-300',
+  },
+}
 
 export default function BillingPage() {
-  const { data: user } = useAuth();
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const { data: profile } = useQuery(getWorkspaceProfile)
+  const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
-  const plan = (user as any)?.subscriptionPlan || "free";
+  const plan = profile?.plan || 'free'
 
   const handleUpgrade = async (planId: string) => {
-    if (planId === plan) return;
-    if (planId === "free") return; // no downgrade via UI
-    setLoading(planId); setError("");
+    if (planId === plan || planId === 'free') return
+    setLoading(planId)
+    setError('')
+
     try {
-      const res = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planId }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Checkout failed"); return; }
-      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
-      else setError("No checkout URL returned");
-    } catch { setError("Network error"); }
-    finally { setLoading(null); }
-  };
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data?.error || 'Checkout failed')
+      if (!data.checkoutUrl) throw new Error('No checkout URL returned')
+      window.location.href = data.checkoutUrl
+    } catch (err: any) {
+      setError(err?.message || 'Could not start checkout.')
+    } finally {
+      setLoading(null)
+    }
+  }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-100">Billing</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Choose the plan that works for your business</p>
-      </div>
-
-      {/* Current plan banner */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-500/10 rounded-xl flex items-center justify-center">
-            <Zap className="w-4 h-4 text-indigo-400" />
-          </div>
+    <div className="mx-auto max-w-6xl space-y-8 p-6">
+      <section className="rounded-3xl border border-zinc-800 bg-linear-to-br from-zinc-900 via-zinc-950 to-zinc-900 p-6 shadow-2xl shadow-black/20">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm text-zinc-400">Current plan</p>
-            <p className="text-sm font-semibold text-zinc-100 capitalize">{plan}</p>
+            <h1 className="text-3xl font-semibold text-zinc-100">Billing & plans</h1>
+            <p className="mt-2 text-sm text-zinc-400">Payments flow through Fiserv and unlock features immediately once the webhook confirms the payment.</p>
+          </div>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
+            Current plan: <span className="font-semibold capitalize text-zinc-100">{plan}</span>
           </div>
         </div>
-        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold capitalize ${plan === "pro" ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30" : plan === "business" ? "bg-violet-500/20 text-violet-300 border border-violet-500/30" : "bg-zinc-700 text-zinc-400"}`}>
-          {plan === "free" ? "Free tier" : "Active"}
-        </span>
-      </div>
+      </section>
 
-      {error && <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>}
+      {error && (
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      )}
 
-      {/* Plan cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {PLANS.map((p) => {
-          const a = ACCENT[p.color];
-          const Icon = p.icon;
-          const isCurrent = p.id === plan;
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        {PLANS.map((item) => {
+          const Icon = item.icon
+          const tone = TONES[item.tone]
+          const current = item.id === plan
+
           return (
-            <div key={p.id} className={`bg-zinc-900 border-2 ${isCurrent ? a.border : "border-zinc-800"} rounded-2xl p-6 flex flex-col relative overflow-hidden transition-all hover:border-opacity-80`}>
-              {p.popular && !isCurrent && (
-                <div className="absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wide">Popular</div>
-              )}
-              {isCurrent && (
-                <div className="absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 border border-green-500/30">Current</div>
-              )}
-
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${p.color === "zinc" ? "bg-zinc-800" : p.color === "indigo" ? "bg-indigo-500/10" : "bg-violet-500/10"}`}>
-                <Icon className={`w-5 h-5 ${a.icon}`} />
+            <div key={item.id} className={`rounded-2xl border-2 bg-zinc-900 p-6 ${current ? tone.card : 'border-zinc-800'}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-950">
+                  <Icon className={`h-5 w-5 ${tone.icon}`} />
+                </div>
+                {current && <span className="rounded-full bg-green-500/10 px-2 py-1 text-[11px] font-medium text-green-300">Current</span>}
               </div>
 
-              <h3 className="text-base font-bold text-zinc-100 mb-1">{p.name}</h3>
-              <div className="mb-5">
-                <span className="text-3xl font-black text-zinc-100">${p.price}</span>
-                <span className="text-sm text-zinc-500">/mo</span>
-              </div>
+              <h2 className="mt-5 text-xl font-semibold text-zinc-100">{item.name}</h2>
+              <p className="mt-2 text-4xl font-semibold text-zinc-100">{item.price}<span className="text-sm text-zinc-500">/mo</span></p>
 
-              <ul className="space-y-2 flex-1 mb-6">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-zinc-300">
-                    <Check className={`w-4 h-4 shrink-0 ${a.icon}`} />
-                    {f}
+              <ul className="mt-6 space-y-3 text-sm text-zinc-300">
+                {item.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2">
+                    <Check className={`mt-0.5 h-4 w-4 shrink-0 ${tone.icon}`} />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
 
               <button
-                onClick={() => handleUpgrade(p.id)}
-                disabled={isCurrent || loading === p.id || p.id === "free"}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${a.btn}`}
+                onClick={() => handleUpgrade(item.id)}
+                disabled={current || loading === item.id || item.id === 'free'}
+                className={`mt-8 w-full rounded-xl px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${tone.button}`}
               >
-                {loading === p.id ? "Redirecting..." : isCurrent ? "Current Plan" : p.id === "free" ? "Free Plan" : `Upgrade to ${p.name}`}
+                {current ? 'Current plan' : loading === item.id ? 'Redirecting…' : item.id === 'free' ? 'Free plan' : `Upgrade to ${item.name}`}
               </button>
             </div>
-          );
+          )
         })}
-      </div>
+      </section>
 
-      <p className="text-xs text-zinc-600 text-center">Payments processed securely via Fiserv · All prices USD · Cancel anytime</p>
+      <div className="flex justify-center">
+        <Link to="/upgrade" className="text-sm text-indigo-300 hover:text-indigo-200">Open the dedicated upgrade page →</Link>
+      </div>
     </div>
-  );
+  )
 }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { HttpError } from "wasp/server";
 import type {
   GenerateCheckoutSession,

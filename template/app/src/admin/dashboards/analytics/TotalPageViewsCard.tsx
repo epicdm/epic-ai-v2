@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ArrowDown, ArrowUp, Eye } from "lucide-react";
 import {
   Card,

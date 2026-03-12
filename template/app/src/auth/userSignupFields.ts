@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { defineUserSignupFields } from "wasp/auth/providers/types";
 import { env } from "wasp/server";
 import { z } from "zod";

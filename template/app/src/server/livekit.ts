@@ -1,4 +1,4 @@
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { AccessToken } from 'livekit-server-sdk'
 
 const LK_API_KEY = process.env.LIVEKIT_API_KEY || 'APIfFhqC7dRApB2'
@@ -7,7 +7,7 @@ const LK_URL = process.env.LIVEKIT_URL || 'wss://ai-agent-dl6ldsi8.livekit.cloud
 const AGENT_NAME = process.env.AGENT_NAME || 'epic-voice-agent'
 
 // GET /api/livekit/token — Talk to Jenny (free tier)
-export const getLivekitToken = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const getLivekitToken = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user
     if (!user) return res.status(401).json({ error: 'Unauthorized' })

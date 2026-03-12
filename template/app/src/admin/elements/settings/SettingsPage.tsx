@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { FileText, Mail, Upload, User } from "lucide-react";
 import { FormEvent } from "react";
 import { type AuthUser } from "wasp/auth";

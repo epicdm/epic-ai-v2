@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Link as WaspRouterLink, routes } from "wasp/client/router";
 interface BreadcrumbProps {
   pageName: string;

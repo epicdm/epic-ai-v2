@@ -1,8 +1,7 @@
 /**
  * Clerk auth shim — drop-in replacement for Wasp's useAuth() + logout
  */
-import { useUser, useClerk } from '@clerk/clerk-react'
-import { useNavigate } from 'react-router-dom'
+import { useUser } from '@clerk/clerk-react'
 
 export function useAuth() {
   const { user, isLoaded } = useUser()

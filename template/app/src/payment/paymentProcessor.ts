@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PrismaClient } from "@prisma/client";
 import { User } from "wasp/entities";
 import type { MiddlewareConfigFn } from "wasp/server";

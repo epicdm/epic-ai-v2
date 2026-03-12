@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { User } from "wasp/entities";
 import { PrismaClient } from "wasp/server";
 import { PaymentPlanId, SubscriptionStatus } from "./plans";

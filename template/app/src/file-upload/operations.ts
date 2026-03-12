@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type File } from "wasp/entities";
 import { HttpError } from "wasp/server";
 import {

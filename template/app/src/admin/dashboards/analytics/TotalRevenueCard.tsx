@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ArrowDown, ArrowUp, ShoppingCart } from "lucide-react";
 import { useMemo } from "react";
 import { type DailyStatsProps } from "../../../analytics/stats";

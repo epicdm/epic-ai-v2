@@ -1,7 +1,7 @@
 /**
  * Fiserv Payment Integration — BFF-SPEC.md Section 7.4
  */
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 import crypto from 'crypto'
 
@@ -11,7 +11,7 @@ const FISERV_BASE_URL = 'https://api01.epic.dm'
 
 // ─── Create checkout session ──────────────────────────────────
 
-export const createCheckout = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const createCheckout = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user
     if (!user) return res.status(401).json({ error: 'Unauthorized' })
@@ -57,7 +57,7 @@ export const createCheckout = async (req: ExpressHttpRequest, res: ExpressHttpRe
 
 // ─── Fiserv webhook (payment confirmation) ────────────────────
 
-export const fiservWebhook = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const fiservWebhook = async (req: Request, res: Response) => {
   // Verify signature
   const signature = req.headers['x-fiserv-signature'] as string
   if (!signature) {

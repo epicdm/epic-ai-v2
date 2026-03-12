@@ -1,119 +1,160 @@
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
+import { useQuery } from 'wasp/client/operations'
+import { getWorkspaceProfile } from 'wasp/client/operations'
 
 const PLANS = [
   {
-    slug: 'free', name: 'Free', price: '$0', period: 'forever', current: true,
-    features: ['1 AI agent', '50 messages/day', 'Live inbox (view-only)', 'WhatsApp activation', 'Business profile'],
+    slug: 'free',
+    name: 'Free',
+    price: '$0',
+    period: 'forever',
+    features: ['1 agent', '50 messages/day', 'Dashboard + onboarding', 'Business profile only'],
   },
   {
-    slug: 'pro', name: 'Pro', price: '$29', period: '/month', highlight: true,
-    features: ['3 AI agents', 'Unlimited messages', 'Full inbox + whisper/takeover', 'Owner WhatsApp alerts', 'Voice calls', 'Knowledge base', '3 active campaigns', '500 broadcasts/mo'],
+    slug: 'pro',
+    name: 'Pro',
+    price: '$29',
+    period: '/month',
+    highlight: true,
+    features: ['3 agents', 'Unlimited messages', 'Whisper / takeover', 'Owner WhatsApp alerts', 'Knowledge base', '3 active campaigns', '500 broadcasts/mo'],
   },
   {
-    slug: 'business', name: 'Business', price: '$99', period: '/month',
-    features: ['Unlimited agents', 'Dedicated WA number', 'Team member logins', 'Unlimited campaigns', 'Barge/whisper on calls', 'API access', 'White-label', 'Priority support'],
+    slug: 'business',
+    name: 'Business',
+    price: '$99',
+    period: '/month',
+    features: ['Unlimited agents', 'Dedicated number', 'Unlimited campaigns', 'Team access', 'API / white-label'],
   },
 ]
 
+const REASON_COPY: Record<string, { eyebrow: string; title: string; body: string }> = {
+  'message-limit': {
+    eyebrow: 'Message limit reached',
+    title: 'Remove the daily message cap',
+    body: 'Pro removes the Free plan\'s 50-message ceiling so Alex can keep replying without interruption.',
+  },
+  'agent-limit': {
+    eyebrow: 'More agents',
+    title: 'Give your business more than one agent',
+    body: 'Use Pro for up to 3 agents, or Business for unlimited roles across your company.',
+  },
+  campaigns: {
+    eyebrow: 'Campaigns',
+    title: 'Unlock broadcasts and campaigns',
+    body: 'Campaigns are part of the paid workflow and plug straight into the Fiserv checkout already wired into the app.',
+  },
+  alerts: {
+    eyebrow: 'Owner alerts',
+    title: 'Get WhatsApp alerts when the agent needs you',
+    body: 'Pro adds escalation alerts and regular owner summaries so you can step in at the right moment.',
+  },
+}
+
 export function UpgradePage() {
   const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState('')
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
-  const upgraded = searchParams.get('upgraded') === 'true'
+  const { data: profile } = useQuery(getWorkspaceProfile)
+
+  const currentPlan = profile?.plan || 'free'
+  const reason = searchParams.get('reason') || ''
+  const requestedPlan = searchParams.get('plan') || ''
+  const copy = useMemo(() => REASON_COPY[reason] || {
+    eyebrow: 'Upgrade',
+    title: 'Upgrade your plan',
+    body: 'Unlock more agents, unlimited messages, campaign tools, and higher-touch support.',
+  }, [reason])
 
   async function handleUpgrade(plan: string) {
+    if (plan === currentPlan || plan === 'free') return
     setLoading(plan)
+    setError('')
     try {
-      const token = (window as any).__clerk_session_token
-      const res = await fetch('/api/billing/checkout', {
+      const response = await fetch('/api/billing/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan }),
       })
-      const data = await res.json()
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
-      } else {
-        alert('Could not start checkout. Please try again.')
-      }
-    } catch {
-      alert('Error connecting to payment service.')
+      const data = await response.json()
+      if (!response.ok) throw new Error(data?.error || 'Could not start checkout.')
+      if (!data.checkoutUrl) throw new Error('No checkout URL returned.')
+      window.location.href = data.checkoutUrl
+    } catch (err: any) {
+      setError(err?.message || 'Could not connect to the payment flow.')
     } finally {
       setLoading(null)
     }
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0f1a', color: '#fff', fontFamily: "'Inter', -apple-system, sans-serif", padding: '48px 24px' }}>
-      <div style={{ maxWidth: '960px', margin: '0 auto', textAlign: 'center' }}>
+    <div className="min-h-screen bg-zinc-950 px-6 py-12 text-zinc-100">
+      <div className="mx-auto max-w-6xl space-y-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-300">{copy.eyebrow}</p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight">{copy.title}</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">{copy.body}</p>
+            <p className="mt-3 text-sm text-zinc-500">Current plan: <span className="font-semibold capitalize text-zinc-200">{currentPlan}</span></p>
+          </div>
+          <Link to="/dashboard" className="inline-flex items-center justify-center rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:border-zinc-600 hover:bg-zinc-900">
+            Back to dashboard
+          </Link>
+        </div>
 
-        {upgraded && (
-          <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid #10b981', borderRadius: '12px', padding: '16px 24px', marginBottom: '32px', color: '#10b981', fontWeight: '600' }}>
-            🎉 You're upgraded! Your new features are unlocked.
+        {error && (
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
           </div>
         )}
 
-        <button onClick={() => navigate('/dashboard')} style={{ background: 'transparent', border: 'none', color: '#9ca3af', cursor: 'pointer', marginBottom: '32px', fontSize: '14px' }}>
-          ← Back to Dashboard
-        </button>
-
-        <h1 style={{ fontSize: '40px', fontWeight: '800', marginBottom: '12px' }}>Upgrade your plan</h1>
-        <p style={{ color: '#9ca3af', fontSize: '18px', marginBottom: '48px' }}>Unlock more agents, unlimited messages, and powerful tools.</p>
-
-        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {PLANS.map(plan => (
-            <div key={plan.slug} style={{
-              flex: '1', minWidth: '260px', maxWidth: '300px',
-              background: (plan as any).highlight ? 'linear-gradient(135deg, #1a1040, #1e1b4b)' : '#111827',
-              border: `2px solid ${(plan as any).highlight ? '#6366f1' : '#1f2937'}`,
-              borderRadius: '20px', padding: '32px 28px', textAlign: 'left', position: 'relative',
-            }}>
-              {(plan as any).highlight && (
-                <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: '#6366f1', color: '#fff', borderRadius: '100px', padding: '4px 16px', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>
-                  Most Popular
+        <div className="grid gap-5 md:grid-cols-3">
+          {PLANS.map((plan) => {
+            const isCurrent = plan.slug === currentPlan
+            const isSuggested = requestedPlan === plan.slug
+            return (
+              <div
+                key={plan.slug}
+                className={`relative rounded-3xl border-2 bg-zinc-900 p-6 ${isSuggested ? 'border-indigo-500/40' : 'border-zinc-800'} ${plan.highlight ? 'shadow-2xl shadow-indigo-500/10' : ''}`}
+              >
+                {plan.highlight && !isCurrent && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-500 px-3 py-1 text-xs font-bold text-white">
+                    Most popular
+                  </div>
+                )}
+                {isSuggested && (
+                  <div className="mb-4 inline-flex rounded-full bg-indigo-500/10 px-2.5 py-1 text-xs font-medium text-indigo-200">
+                    Recommended for this upgrade
+                  </div>
+                )}
+                <h2 className="text-xl font-semibold text-zinc-100">{plan.name}</h2>
+                <div className="mt-3 text-4xl font-semibold text-zinc-100">
+                  {plan.price}
+                  <span className="ml-1 text-sm font-medium text-zinc-500">{plan.period}</span>
                 </div>
-              )}
-              <h3 style={{ fontWeight: '700', fontSize: '20px', marginBottom: '8px' }}>{plan.name}</h3>
-              <div style={{ marginBottom: '24px' }}>
-                <span style={{ fontSize: '40px', fontWeight: '800' }}>{plan.price}</span>
-                <span style={{ color: '#9ca3af', fontSize: '16px' }}>{plan.period}</span>
-              </div>
 
-              {(plan as any).current ? (
-                <div style={{ width: '100%', background: '#1f2937', borderRadius: '10px', color: '#9ca3af', fontWeight: '600', fontSize: '15px', padding: '14px', textAlign: 'center', marginBottom: '24px' }}>
-                  Current Plan
-                </div>
-              ) : (
                 <button
                   onClick={() => handleUpgrade(plan.slug)}
-                  disabled={loading === plan.slug}
-                  style={{
-                    width: '100%',
-                    background: (plan as any).highlight ? '#6366f1' : 'transparent',
-                    border: (plan as any).highlight ? 'none' : '1px solid #374151',
-                    borderRadius: '10px', color: '#fff', fontWeight: '700', fontSize: '15px',
-                    padding: '14px', cursor: 'pointer', marginBottom: '24px',
-                    opacity: loading === plan.slug ? 0.7 : 1,
-                  }}>
-                  {loading === plan.slug ? 'Starting checkout...' : `Upgrade to ${plan.name} →`}
+                  disabled={isCurrent || loading === plan.slug || plan.slug === 'free'}
+                  className={`mt-6 w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${isCurrent ? 'bg-zinc-800 text-zinc-400' : plan.highlight ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:from-indigo-400 hover:to-violet-500' : 'border border-zinc-700 bg-transparent text-white hover:bg-zinc-800'} disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {isCurrent ? 'Current plan' : loading === plan.slug ? 'Starting checkout…' : plan.slug === 'free' ? 'Free plan' : `Upgrade to ${plan.name}`}
                 </button>
-              )}
 
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {plan.features.map(f => (
-                  <li key={f} style={{ display: 'flex', gap: '8px', fontSize: '14px', color: '#d1d5db', marginBottom: '10px' }}>
-                    <span style={{ color: '#25d366' }}>✓</span> {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                <ul className="mt-6 space-y-3 text-sm text-zinc-300">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex gap-2">
+                      <span className="text-emerald-400">✓</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
         </div>
 
-        <p style={{ color: '#4b5563', fontSize: '13px', marginTop: '40px' }}>
-          Payments processed securely by Fiserv · No hidden fees · Cancel anytime
-        </p>
+        <p className="text-center text-xs text-zinc-600">Payments processed securely by Fiserv via api01.epic.dm. Features unlock as soon as the webhook updates your plan.</p>
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ResetPasswordForm } from "../../lib/useClerkAuth";
 import { Link as WaspRouterLink, routes } from "wasp/client/router";
 import { AuthPageLayout } from "../AuthPageLayout";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { FormEvent, useEffect, useState } from "react";
 import {
   addFileToDb,

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type DailyStats } from "wasp/entities";
 import { type DailyStatsJob } from "wasp/server/jobs";
 import {

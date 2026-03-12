@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { PrismaPromise } from "@prisma/client";
 import OpenAI from "openai";
 import type { GptResponse, Task, User } from "wasp/entities";

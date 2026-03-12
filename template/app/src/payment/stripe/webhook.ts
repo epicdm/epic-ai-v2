@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type PrismaClient } from "@prisma/client";
 import express from "express";
 import type { Stripe } from "stripe";

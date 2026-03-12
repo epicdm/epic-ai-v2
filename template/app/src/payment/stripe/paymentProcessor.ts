@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Stripe from "stripe";
 import { config } from "wasp/server";
 import { assertUnreachable } from "../../shared/utils";

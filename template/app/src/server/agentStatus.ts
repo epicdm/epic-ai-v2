@@ -1,8 +1,8 @@
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 import crypto from 'crypto'
 
-export const getAgentStatus = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const getAgentStatus = async (req: Request, res: Response) => {
   const user = (req as any).user
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 
@@ -20,7 +20,7 @@ export const getAgentStatus = async (req: ExpressHttpRequest, res: ExpressHttpRe
   })
 }
 
-export const getMyAgentsHandler = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const getMyAgentsHandler = async (req: Request, res: Response) => {
   const user = (req as any).user
   if (!user) return res.status(401).json({ error: 'Unauthorized' })
 

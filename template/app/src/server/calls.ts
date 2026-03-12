@@ -1,4 +1,4 @@
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 import { AccessToken, SipClient } from 'livekit-server-sdk'
 
@@ -11,7 +11,7 @@ const EPIC_SHARED_INBOUND_TRUNK = process.env.LK_SIP_TRUNK_ID || 'ST_WEc3Hz4Xerb
 const pendingCalls = new Map<string, { caller: string; roomName: string; at: number }>()
 
 // POST /api/calls/outbound
-export const callsOutbound = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const callsOutbound = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user
     if (!user) return res.status(401).json({ error: 'Unauthorized' })
@@ -50,7 +50,7 @@ export const callsOutbound = async (req: ExpressHttpRequest, res: ExpressHttpRes
 }
 
 // GET /api/calls/incoming?userId=xxx
-export const callsIncomingGet = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const callsIncomingGet = async (req: Request, res: Response) => {
   try {
     const { userId } = req.query
     if (!userId) return res.json({ call: null })
@@ -68,7 +68,7 @@ export const callsIncomingGet = async (req: ExpressHttpRequest, res: ExpressHttp
 }
 
 // DELETE /api/calls/incoming
-export const callsIncomingDelete = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const callsIncomingDelete = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user
     if (!user) return res.status(401).json({ error: 'Unauthorized' })

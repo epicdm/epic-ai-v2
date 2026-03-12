@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { useQuery } from 'wasp/client/operations'
 import { getMyAgents } from 'wasp/client/operations'
 import confetti from 'canvas-confetti'

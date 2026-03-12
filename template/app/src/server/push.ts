@@ -1,4 +1,4 @@
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 import webpush from 'web-push'
 
@@ -11,7 +11,7 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
 }
 
 // POST /api/push/subscribe
-export const pushSubscribePost = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const pushSubscribePost = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user
     if (!user) return res.status(401).json({ error: 'Unauthorized' })
@@ -32,7 +32,7 @@ export const pushSubscribePost = async (req: ExpressHttpRequest, res: ExpressHtt
 }
 
 // DELETE /api/push/subscribe
-export const pushSubscribeDelete = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const pushSubscribeDelete = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user
     if (!user) return res.status(401).json({ error: 'Unauthorized' })
@@ -45,7 +45,7 @@ export const pushSubscribeDelete = async (req: ExpressHttpRequest, res: ExpressH
 }
 
 // POST /api/push/notify — called by Asterisk shell script
-export const pushNotify = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const pushNotify = async (req: Request, res: Response) => {
   res.status(200).json({ ok: true })
 
   try {

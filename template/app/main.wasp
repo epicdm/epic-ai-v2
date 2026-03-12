@@ -114,9 +114,9 @@ page CallsPage {
   component: import CallsPage from "@src/client/dashboard/CallsPage"
 }
 
-route BroadcastsRoute { path: "/dashboard/broadcasts", to: BroadcastsPage }
-page BroadcastsPage {
-  component: import BroadcastsPage from "@src/client/dashboard/BroadcastsPage"
+route CampaignsRoute { path: "/dashboard/campaigns", to: CampaignsPage }
+page CampaignsPage {
+  component: import CampaignsPage from "@src/client/dashboard/CampaignsPage"
 }
 
 route ContactsRoute { path: "/dashboard/contacts", to: ContactsPage }
@@ -158,17 +158,17 @@ page PricingPage {
 
 route AdminRoute { path: "/admin", to: AdminDashboardPage }
 page AdminDashboardPage {
-  component: import { AnalyticsDashboardPage } from "@src/admin/dashboards/AnalyticsDashboardPage"
+  component: import AdminOverviewPage from "@src/client/admin/AdminOverviewPage"
 }
 
 route AdminUsersRoute { path: "/admin/users", to: AdminUsersPage }
 page AdminUsersPage {
-  component: import { AdminUsersPage } from "@src/admin/dashboards/AdminUsersPage"
+  component: import AdminUsersPage from "@src/client/admin/AdminUsersPage"
 }
 
 route AdminSettingsRoute { path: "/admin/settings", to: AdminSettingsPage }
 page AdminSettingsPage {
-  component: import { AdminSettingsPage } from "@src/admin/elements/AdminSettingsPage"
+  component: import AdminSettingsPage from "@src/client/admin/AdminSettingsPage"
 }
 
 route NotFoundRoute { path: "*", to: NotFoundPage }
@@ -191,6 +191,16 @@ query getAgents {
 query getAgent {
   fn: import { getAgent } from "@src/server/queries",
   entities: [Agent]
+}
+
+query getWorkspaceProfile {
+  fn: import { getWorkspaceProfile } from "@src/server/queries",
+  entities: [User]
+}
+
+query getDashboardOverview {
+  fn: import { getDashboardOverview } from "@src/server/queries",
+  entities: [User, Agent, Conversation, WhatsAppMessage, Campaign, AgentActivity, Contact]
 }
 
 query getConversations {
@@ -223,6 +233,11 @@ query getBroadcasts {
   entities: [Campaign]
 }
 
+query getCampaignsOverview {
+  fn: import { getCampaignsOverview } from "@src/server/queries",
+  entities: [Campaign, CampaignStep, CampaignEnrollment, Agent]
+}
+
 query getPaginatedUsers {
   fn: import { getPaginatedUsers } from "@src/server/queries",
   entities: [User]
@@ -231,6 +246,11 @@ query getPaginatedUsers {
 query getDailyStats {
   fn: import { getDailyStats } from "@src/server/queries",
   entities: [User]
+}
+
+query getAdminOverview {
+  fn: import { getAdminOverview } from "@src/server/queries",
+  entities: [User, Agent, Campaign, AgentActivity, Conversation]
 }
 
 // ─── Actions ─────────────────────────────────────────────────
@@ -293,6 +313,21 @@ action updateTodo {
 action deleteTodo {
   fn: import { deleteTodo } from "@src/server/actions",
   entities: [Todo]
+}
+
+action createCampaign {
+  fn: import { createCampaign } from "@src/server/actions",
+  entities: [Campaign, CampaignStep, Agent]
+}
+
+action updateCampaignStatus {
+  fn: import { updateCampaignStatus } from "@src/server/actions",
+  entities: [Campaign]
+}
+
+action deleteCampaign {
+  fn: import { deleteCampaign } from "@src/server/actions",
+  entities: [Campaign]
 }
 
 action createBroadcast {
@@ -409,4 +444,52 @@ api pushNotify {
   fn: import { pushNotify } from "@src/server/push",
   httpRoute: (POST, "/api/push/notify"),
   auth: false
+}
+
+api campaignsListApi {
+  fn: import { campaignsList } from "@src/server/campaignsApi",
+  httpRoute: (GET, "/api/campaigns"),
+  auth: true
+}
+
+api campaignsCreateApi {
+  fn: import { campaignsCreate } from "@src/server/campaignsApi",
+  httpRoute: (POST, "/api/campaigns"),
+  auth: true
+}
+
+api campaignsDetailApi {
+  fn: import { campaignsDetail } from "@src/server/campaignsApi",
+  httpRoute: (GET, "/api/campaigns/:id"),
+  auth: true
+}
+
+api campaignsUpdateApi {
+  fn: import { campaignsUpdate } from "@src/server/campaignsApi",
+  httpRoute: (PUT, "/api/campaigns/:id"),
+  auth: true
+}
+
+api campaignsDeleteApi {
+  fn: import { campaignsDelete } from "@src/server/campaignsApi",
+  httpRoute: (DELETE, "/api/campaigns/:id"),
+  auth: true
+}
+
+api campaignsLaunchApi {
+  fn: import { campaignsLaunch } from "@src/server/campaignsApi",
+  httpRoute: (POST, "/api/campaigns/:id/launch"),
+  auth: true
+}
+
+api campaignsPauseApi {
+  fn: import { campaignsPause } from "@src/server/campaignsApi",
+  httpRoute: (POST, "/api/campaigns/:id/pause"),
+  auth: true
+}
+
+api adminOverviewApi {
+  fn: import { adminOverview } from "@src/server/adminOverview",
+  httpRoute: (GET, "/api/admin/overview"),
+  auth: true
 }

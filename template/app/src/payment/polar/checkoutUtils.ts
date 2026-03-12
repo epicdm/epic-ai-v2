@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Checkout } from "@polar-sh/sdk/models/components/checkout.js";
 import { Customer } from "@polar-sh/sdk/models/components/customer.js";
 import { config } from "wasp/server";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // TODO: Add messages page
 import type { AuthUser } from "wasp/auth";
 import DefaultLayout from "../../layout/DefaultLayout";

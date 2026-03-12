@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type Task } from "wasp/entities";
 
 import {

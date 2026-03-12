@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 
 const TEMPLATES = [
   { slug: 'receptionist', emoji: '🏢', name: 'Receptionist', tagline: 'Never miss a customer again', desc: 'Answers inquiries, books appointments, shares hours & pricing' },

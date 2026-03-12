@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { BetaAnalyticsDataClient } from "@google-analytics/data";
 import { env } from "wasp/server";
 

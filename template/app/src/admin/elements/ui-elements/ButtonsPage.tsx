@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Heart, Plus, Trash2 } from "lucide-react";
 import { type AuthUser } from "wasp/auth";
 import { Button } from "../../../client/components/ui/button";

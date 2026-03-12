@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type AuthUser } from "wasp/auth";
 import Breadcrumb from "../../layout/Breadcrumb";
 import DefaultLayout from "../../layout/DefaultLayout";

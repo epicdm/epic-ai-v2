@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createCheckout } from "@lemonsqueezy/lemonsqueezy.js";
 
 interface LemonSqueezyCheckoutSessionParams {

@@ -1,7 +1,7 @@
-import { type ExpressHttpRequest, type ExpressHttpResponse } from 'wasp/server'
+import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 
-export const fiservWebhook = async (req: ExpressHttpRequest, res: ExpressHttpResponse) => {
+export const fiservWebhook = async (req: Request, res: Response) => {
   res.status(200).send('OK')
 
   try {
@@ -17,21 +17,13 @@ export const fiservWebhook = async (req: ExpressHttpRequest, res: ExpressHttpRes
       await prisma.user.update({
         where: { id: userId },
         data: {
+          plan,
           subscriptionPlan: plan,
           subscriptionStatus: 'active',
-          pendingPlan: null,
-          pendingPlanSince: null,
           datePaid: new Date(),
-          lastBillingDate: new Date(),
         },
       })
       console.log(`[Fiserv] Upgraded user ${userId} to ${plan}`)
-    } else if (status === 'DECLINED' || status === 'FAILED') {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { pendingPlan: null, pendingPlanSince: null },
-      })
-      console.log(`[Fiserv] Payment declined for user ${userId}`)
     }
   } catch (err: any) {
     console.error('[Fiserv Webhook Error]', err.message)

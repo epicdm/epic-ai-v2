@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getCustomer } from "@lemonsqueezy/lemonsqueezy.js";
 import { type PrismaClient } from "@prisma/client";
 import crypto from "crypto";

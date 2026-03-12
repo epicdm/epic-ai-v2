@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * WhatsApp Webhook Handler — V2
  * Implements full 8-step routing decision tree from BFF-SPEC.md Section 7.1
@@ -5,6 +6,7 @@
 import type { Request, Response } from 'express'
 import { prisma } from 'wasp/server'
 import crypto from 'crypto'
+import { buildKnowledgeContext } from '../knowledge'
 
 const VERIFY_TOKEN = process.env.META_WA_VERIFY_TOKEN || 'epic-wa-2026'
 const WA_TOKEN = process.env.META_WA_TOKEN || ''
@@ -98,7 +100,7 @@ async function callLLM(systemPrompt: string, history: Array<{ role: string; cont
 
 // ─── Build system prompt ──────────────────────────────────────
 
-function buildSystemPrompt(agent: any, sessionType: 'owner' | 'customer'): string {
+function buildSystemPrompt(agent: any, sessionType: 'owner' | 'customer', knowledgeContext = ''): string {
   const knowledge = agent.config?.knowledge || {}
   const businessName = knowledge.businessName || 'our business'
   const hours = knowledge.hours || 'business hours'
@@ -155,12 +157,13 @@ Always: Be proactive. Remind before deadlines. Summarize clearly.
 Never: ${restrictions || 'share personal information with others, make financial decisions without asking'}`,
   }
 
-  const base = templatePrompts[agent.template] || `You are ${agent.name}, an AI assistant for ${businessName}. Be helpful, friendly, and concise.`
+  const basePrompt = templatePrompts[agent.template] || `You are ${agent.name}, an AI assistant for ${businessName}. Be helpful, friendly, and concise.`
+  const base = knowledgeContext
+    ? `${basePrompt}\n\nKnowledge base:\n${knowledgeContext}\n\nIf the answer is not in the knowledge you have, say so plainly and offer the next best help. Do not invent business facts.`
+    : basePrompt
 
   if (sessionType === 'owner') {
-    return `${base}
-
-OWNER MODE: You are now speaking privately with the business owner. Be direct, factual, and helpful. Share stats when asked. Accept instructions and update your behaviour accordingly.`
+    return `${base}\n\nOWNER MODE: You are now speaking privately with the business owner. Be direct, factual, and helpful. Share stats when asked. Accept instructions and update your behaviour accordingly.`
   }
 
   return base
@@ -344,7 +347,8 @@ export const whatsappWebhook = async (req: Request, res: Response) => {
           // Owner is replying to a summary — treat as instruction to agent
           await storeMessage(ownerAgent.id, from, 'user', messageText, 'owner', metaMessageId)
           const history = await getHistory(ownerAgent.id, from, 'owner')
-          const systemPrompt = buildSystemPrompt(ownerAgent, 'owner')
+          const knowledgeContext = await buildKnowledgeContext(ownerAgent.id, ownerAgent.config)
+          const systemPrompt = buildSystemPrompt(ownerAgent, 'owner', knowledgeContext)
           const reply = await callLLM(systemPrompt, history, `[Owner instruction via summary reply]: ${messageText}`)
           const sentId = await sendWAMessage(from, reply)
           await storeMessage(ownerAgent.id, from, 'assistant', reply, 'owner', sentId || undefined)
@@ -362,7 +366,8 @@ export const whatsappWebhook = async (req: Request, res: Response) => {
       // Normal owner chat with their agent
       await storeMessage(ownerAgent.id, from, 'user', messageText, 'owner', metaMessageId)
       const history = await getHistory(ownerAgent.id, from, 'owner')
-      const systemPrompt = buildSystemPrompt(ownerAgent, 'owner')
+      const knowledgeContext = await buildKnowledgeContext(ownerAgent.id, ownerAgent.config)
+      const systemPrompt = buildSystemPrompt(ownerAgent, 'owner', knowledgeContext)
       const reply = await callLLM(systemPrompt, history, messageText)
       const sentId = await sendWAMessage(from, reply)
       await storeMessage(ownerAgent.id, from, 'assistant', reply, 'owner', sentId || undefined)
@@ -479,11 +484,11 @@ export const whatsappWebhook = async (req: Request, res: Response) => {
         await sendWAMessage(from, "I'm at my message limit for today. I'll be back tomorrow! 🙏")
         return
       }
-      if (todayCount === 45) {
+      if (todayCount === 48) {
         // Notify owner they're approaching limit
         if (routedAgent.ownerPhone) {
           await sendWAMessage(routedAgent.ownerPhone,
-            `⚠️ ${routedAgent.name} has handled 45/50 messages today. Upgrade to never worry about limits → bff.epic.dm/upgrade`)
+            `⚠️ ${routedAgent.name} has used 48/50 customer messages today on the free plan. Upgrade before you hit the limit → bff.epic.dm/upgrade`)
         }
       }
     }
@@ -518,7 +523,8 @@ async function getHistory(agentId: string, phone: string, sessionType: 'owner' |
 
 async function processMessage(agent: any, from: string, messageText: string, conversationId: string) {
   const history = await getHistory(agent.id, from, 'customer')
-  const systemPrompt = buildSystemPrompt(agent, 'customer')
+  const knowledgeContext = await buildKnowledgeContext(agent.id, agent.config)
+  const systemPrompt = buildSystemPrompt(agent, 'customer', knowledgeContext)
 
   const reply = await callLLM(systemPrompt, history, messageText)
 

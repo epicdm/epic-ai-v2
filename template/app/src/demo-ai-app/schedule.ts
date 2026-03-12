@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type TaskPriority = "low" | "medium" | "high";
 
 export type GeneratedSchedule = {

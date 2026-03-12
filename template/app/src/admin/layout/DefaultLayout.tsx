@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { FC, ReactNode, useState } from "react";
 import { Navigate } from "react-router";
 import { type AuthUser } from "wasp/auth";

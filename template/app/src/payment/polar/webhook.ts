@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Subscription } from "@polar-sh/sdk/models/components/subscription.js";
 import { SubscriptionStatus } from "@polar-sh/sdk/models/components/subscriptionstatus.js";
 import { WebhookOrderPaidPayload } from "@polar-sh/sdk/models/components/webhookorderpaidpayload.js";

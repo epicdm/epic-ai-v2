@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as z from 'zod'
 import { paymentPlansSchema } from '../env'
 

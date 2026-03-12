@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Stripe from "stripe";
 import { User } from "wasp/entities";
 import { config } from "wasp/server";

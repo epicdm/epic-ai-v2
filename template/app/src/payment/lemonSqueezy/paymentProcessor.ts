@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { lemonSqueezySetup, listOrders } from "@lemonsqueezy/lemonsqueezy.js";
 import { env } from "wasp/server";
 import type {

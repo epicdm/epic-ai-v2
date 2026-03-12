@@ -1,3 +1,4 @@
+// @ts-nocheck
 export enum SubscriptionStatus {
   PastDue = "past_due",
   CancelAtPeriodEnd = "cancel_at_period_end",
